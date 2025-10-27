@@ -293,15 +293,17 @@
         
         // Site stats management
         async function loadSiteStats() {
-          try {
-            // Increment visitor count on server
-            const response = await fetch('/api/stats', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({})
-            });
+            console.log('loadSiteStats() called');
+            try {
+                // Increment visitor count on server
+                console.log('Making POST request to /api/stats');
+                const response = await fetch('/api/stats', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
             
             if (!response.ok) {
               throw new Error('Failed to update stats');
@@ -630,6 +632,7 @@
           }
           
           // Load site stats
+          console.log('About to call loadSiteStats()');
           loadSiteStats();
         });
     </script>
