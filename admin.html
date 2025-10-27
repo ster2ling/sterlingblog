@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Stag City</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border: 2px solid #808080;
+            border-style: inset;
+        }
+        .admin-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+        }
+        .admin-section h3 {
+            color: #000080;
+            text-decoration: underline;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            font-family: 'Pixel Operator', monospace;
+        }
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        .btn {
+            background-color: #c0c0c0;
+            border: 2px outset #c0c0c0;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Pixel Operator', monospace;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            background-color: #d0d0d0;
+        }
+        .btn:active {
+            border-style: inset;
+        }
+        .btn-danger {
+            background-color: #ffcccc;
+            border-color: #ff9999;
+        }
+        .btn-danger:hover {
+            background-color: #ffdddd;
+        }
+        
+        /* Retro checkbox styling */
+        #rememberMe:checked {
+            background-color: #000080;
+            box-shadow: inset 1px 1px 2px #000000, inset -1px -1px 2px #404040;
+        }
+        
+        #rememberMe:checked::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #rememberMe:hover {
+            background-color: #d0d0d0;
+        }
+        
+        #rememberMe:active {
+            border: 2px inset #c0c0c0;
+        }
+        .suggestion-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        .suggestion-item .meta {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .suggestion-item .content {
+            font-weight: bold;
+        }
+        .quote-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        .quote-item .quote-text {
+            font-style: italic;
+            margin-bottom: 5px;
+        }
+        .quote-item .quote-author {
+            font-weight: bold;
+            color: #000080;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Password Protection -->
+        <div id="passwordSection" class="admin-section">
+            <h3>Admin Access</h3>
+            <div class="form-group">
+                <label>Enter Password:</label>
+                <input type="password" id="adminPassword" placeholder="Enter admin password...">
+            </div>
+            <div class="form-group">
+                <label style="display: flex; align-items: center; font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" id="rememberMe" style="margin-right: 8px; width: 16px; height: 16px; appearance: none; background-color: #c0c0c0; border: 2px outset #c0c0c0; cursor: pointer;"> Remember me for this session
+                </label>
+            </div>
+            <button class="btn" onclick="checkPassword()">Access Admin Panel</button>
+        </div>
+        
+        <!-- Admin Panel Content (Hidden Initially) -->
+        <div id="adminContent" style="display: none;">
+        <h1 style="text-align: center; color: #000080; text-decoration: underline;">Admin Panel - Stag City</h1>
+        <div style="text-align: right; margin-bottom: 20px;">
+            <a href="index.html" class="btn" style="background-color: #4CAF50; color: white; text-decoration: none; margin-right: 10px;">Back to Home</a>
+            <button class="btn" onclick="logout()" style="background-color: #ff6b6b; color: white;">Logout</button>
+        </div>
+        
+        <!-- Quotes Management -->
+        <div class="admin-section">
+            <h3>Quote Management</h3>
+            <div class="form-group">
+                <label>Add New Quote:</label>
+                <textarea id="newQuote" placeholder="Enter quote text..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Author:</label>
+                <input type="text" id="newAuthor" placeholder="Enter author name...">
+            </div>
+            <button class="btn" onclick="addQuote()">Add Quote</button>
+            
+            <h4>Existing Quotes:</h4>
+            <div id="quotesList"></div>
+        </div>
+
+        <!-- Home Thread Management -->
+        <div class="admin-section">
+            <h3>Home Thread Management</h3>
+            <div class="form-group">
+                <label>Current Home Thread:</label>
+                <textarea id="homeThread" placeholder="Enter home thread content..."></textarea>
+            </div>
+            <button class="btn" onclick="updateHomeThread()">Update Home Thread</button>
+        </div>
+
+        <!-- Site Stats Management -->
+        <div class="admin-section">
+            <h3>Site Stats Management</h3>
+            
+            <div class="form-group">
+                <label>Reset Visitor Count:</label>
+                <input type="number" id="visitorCount" placeholder="Enter new visitor count">
+                <button class="btn" onclick="resetVisitorCount()">Reset Count</button>
+            </div>
+            
+            <div class="form-group">
+                <label>Current Stats (Auto-calculated):</label>
+                <div style="background-color: #f0f0f0; padding: 10px; border: 1px solid #ccc; font-family: monospace;">
+                    <div>Dev Log Posts: <span id="admin-devlog-count">0</span></div>
+                    <div>Suggestions: <span id="admin-suggestion-count">0</span></div>
+                    <div>Quotes: <span id="admin-quote-count">5</span></div>
+                    <div>Last Updated: <span id="admin-last-updated">Never</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Activity Management -->
+        <div class="admin-section">
+            <h3>Activity Management</h3>
+            
+            <div class="form-group">
+                <label>Currently Reading:</label>
+                <input type="text" id="readingStatus" placeholder="What are you reading?">
+            </div>
+            
+            <div class="form-group">
+                <label>Currently Watching:</label>
+                <input type="text" id="watchingStatus" placeholder="What are you watching?">
+            </div>
+            
+            <div class="form-group">
+                <label>Currently Listening:</label>
+                <input type="text" id="listeningStatus" placeholder="What are you listening to?">
+            </div>
+            
+            <div class="form-group">
+                <label>Currently Playing:</label>
+                <input type="text" id="playingStatus" placeholder="What are you playing?">
+            </div>
+            
+            <button class="btn" onclick="updateActivity()">Update Activity</button>
+        </div>
+        
+        <!-- Dev Log Management -->
+        <div class="admin-section">
+            <h3>Dev Log Management</h3>
+            
+            <div class="form-group">
+                <label>Add New Dev Log Post:</label>
+                <textarea id="newDevLogPost" placeholder="Enter your dev log post content..."></textarea>
+            </div>
+            
+            <button class="btn" onclick="addDevLogPost()">Add Post</button>
+            
+            <div class="form-group">
+                <label>Current Dev Log Posts:</label>
+                <div id="devLogList" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9;">
+                    <p>Loading posts...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mood Management -->
+        <div class="admin-section">
+            <h3>Mood Management</h3>
+            
+            <div class="form-group">
+                <label>Current Mood Description:</label>
+                <textarea id="moodDescription" placeholder="Enter your current mood description...">i want to see my girlfriend</textarea>
+            </div>
+            
+            <button class="btn" onclick="updateMood()">Update Mood</button>
+        </div>
+        
+        <!-- Image Management -->
+        <div class="admin-section">
+            <h3>Image Management</h3>
+            
+            <!-- Upload from Computer -->
+            <div class="form-group">
+                <label>Upload from Computer:</label>
+                <input type="file" id="computerUpload" accept="image/*" onchange="handleComputerUpload()">
+            </div>
+            
+            <!-- Upload from Phone -->
+            <div class="form-group">
+                <label>Upload from Phone:</label>
+                <input type="file" id="phoneUpload" accept="image/*" capture="camera" onchange="handlePhoneUpload()">
+            </div>
+            
+            <!-- Manual Path -->
+            <div class="form-group">
+                <label>Or enter image path manually:</label>
+                <input type="text" id="imagePath" placeholder="images/avatar.JPG">
+            </div>
+            
+            <div class="form-group">
+                <label>Image Alt Text:</label>
+                <input type="text" id="imageAlt" placeholder="Image description">
+            </div>
+            
+            <button class="btn" onclick="updateImage()">Update Image</button>
+            
+            <!-- Preview -->
+            <div class="form-group">
+                <label>Preview:</label>
+                <img id="imagePreview" src="" style="max-width: 200px; max-height: 200px; border: 1px solid #ccc; display: none;">
+            </div>
+        </div>
+
+        <!-- Suggestions Management -->
+        <div class="admin-section">
+            <h3>Suggestions Management</h3>
+            <div id="suggestionsList"></div>
+            <button class="btn btn-danger" onclick="clearAllSuggestions()">Clear All Suggestions</button>
+        </div>
+
+        <!-- Export/Import -->
+        <div class="admin-section">
+            <h3>Data Management</h3>
+            <button class="btn" onclick="exportData()">Export All Data</button>
+            <button class="btn" onclick="importData()">Import Data</button>
+            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImport()">
+        </div>
+    </div>
+
+    <script>
+        // Password protection
+        const ADMIN_PASSWORD = "Sterling123"; // Change this to your desired password
+        
+        function checkPassword() {
+            const enteredPassword = document.getElementById('adminPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+            
+            if (enteredPassword === ADMIN_PASSWORD) {
+                document.getElementById('passwordSection').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
+                loadAllData();
+                
+                // If "Remember Me" is checked, save session
+                if (rememberMe) {
+                    sessionStorage.setItem('adminLoggedIn', 'true');
+                }
+            } else {
+                alert('Incorrect password!');
+                document.getElementById('adminPassword').value = '';
+            }
+        }
+        
+        // Check if already logged in
+        function checkExistingSession() {
+            if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+                document.getElementById('passwordSection').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
+                loadAllData();
+            }
+        }
+        
+        // Logout function
+        function logout() {
+            sessionStorage.removeItem('adminLoggedIn');
+            document.getElementById('passwordSection').style.display = 'block';
+            document.getElementById('adminContent').style.display = 'none';
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('rememberMe').checked = false;
+        }
+        
+        function loadAllData() {
+            loadQuotes();
+            loadHomeThread();
+            loadMood();
+            loadDevLogPosts();
+            loadActivity();
+            loadImage();
+            loadSuggestions();
+            loadSiteStats();
+        }
+        
+        // Site Stats Management
+        function resetVisitorCount() {
+            const newCount = document.getElementById('visitorCount').value;
+            if (newCount && !isNaN(newCount)) {
+                localStorage.setItem('siteStats', JSON.stringify({
+                    visitorCount: parseInt(newCount)
+                }));
+                alert('Visitor count reset!');
+                loadSiteStats();
+            }
+        }
+        
+        function loadSiteStats() {
+            const devLogPosts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
+            const suggestions = JSON.parse(localStorage.getItem('suggestions') || '[]');
+            const adminQuotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
+            const defaultQuotes = 5;
+            const totalQuotes = adminQuotes.length > 0 ? adminQuotes.length : defaultQuotes;
+            
+            let lastUpdated = 'Never';
+            if (devLogPosts.length > 0) {
+                const latestPost = devLogPosts[0];
+                lastUpdated = latestPost.date || 'Unknown';
+            }
+            
+            document.getElementById('admin-devlog-count').textContent = devLogPosts.length;
+            document.getElementById('admin-suggestion-count').textContent = suggestions.length;
+            document.getElementById('admin-quote-count').textContent = totalQuotes;
+            document.getElementById('admin-last-updated').textContent = lastUpdated;
+        }
+        
+        // Activity Management
+        function updateActivity() {
+            const reading = document.getElementById('readingStatus').value.trim();
+            const watching = document.getElementById('watchingStatus').value.trim();
+            const listening = document.getElementById('listeningStatus').value.trim();
+            const playing = document.getElementById('playingStatus').value.trim();
+            
+            const activityData = {
+                reading: reading || 'Nothing at the moment',
+                watching: watching || 'Nothing at the moment', 
+                listening: listening || 'Nothing at the moment',
+                playing: playing || 'Nothing at the moment'
+            };
+            
+            localStorage.setItem('adminActivity', JSON.stringify(activityData));
+            alert('Activity updated!');
+        }
+        
+        function loadActivity() {
+            const activityData = JSON.parse(localStorage.getItem('adminActivity') || '{}');
+            
+            document.getElementById('readingStatus').value = activityData.reading || 'Nothing at the moment';
+            document.getElementById('watchingStatus').value = activityData.watching || 'How I Met Your Mother';
+            document.getElementById('listeningStatus').value = activityData.listening || 'Rock, Indie, Everything';
+            document.getElementById('playingStatus').value = activityData.playing || 'Minecraft!';
+        }
+
+        // Quote Management
+        function addQuote() {
+            const quote = document.getElementById('newQuote').value.trim();
+            const author = document.getElementById('newAuthor').value.trim();
+            
+            if (!quote || !author) {
+                alert('Please fill in both quote and author!');
+                return;
+            }
+            
+            let quotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
+            quotes.push({ 
+                quote, 
+                author, 
+                id: Date.now(),
+                dateAdded: new Date().toLocaleDateString()
+            });
+            localStorage.setItem('adminQuotes', JSON.stringify(quotes));
+            
+            document.getElementById('newQuote').value = '';
+            document.getElementById('newAuthor').value = '';
+            loadQuotes();
+        }
+
+        function deleteQuote(index) {
+            let quotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
+            quotes.splice(index, 1);
+            localStorage.setItem('adminQuotes', JSON.stringify(quotes));
+            loadQuotes();
+        }
+
+        function loadQuotes() {
+            const quotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
+            const container = document.getElementById('quotesList');
+            
+            if (quotes.length === 0) {
+                container.innerHTML = '<p>No quotes yet.</p>';
+                return;
+            }
+            
+            container.innerHTML = quotes.map((q, index) => `
+                <div class="quote-item">
+                    <div class="quote-text">"${q.quote}"</div>
+                    <div class="quote-author">- ${q.author}</div>
+                    <div class="meta">Added: ${q.dateAdded || 'Unknown'}</div>
+                    <button class="btn btn-danger" onclick="deleteQuote(${index})">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        // Image Upload Functions
+        function handleComputerUpload() {
+            const file = document.getElementById('computerUpload').files[0];
+            if (file) {
+                processImageFile(file);
+            }
+        }
+
+        function handlePhoneUpload() {
+            const file = document.getElementById('phoneUpload').files[0];
+            if (file) {
+                processImageFile(file);
+            }
+        }
+
+        function processImageFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Convert to base64 for storage
+                const base64 = e.target.result;
+                localStorage.setItem('adminImageData', base64);
+                
+                // Update preview
+                const preview = document.getElementById('imagePreview');
+                preview.src = base64;
+                preview.style.display = 'block';
+                
+                // Update path field
+                document.getElementById('imagePath').value = 'data:image/jpeg;base64,' + base64.split(',')[1];
+                
+                alert('Image uploaded successfully!');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Dev Log Management
+        function addDevLogPost() {
+            const postContent = document.getElementById('newDevLogPost').value.trim();
+            if (!postContent) {
+                alert('Please enter some content for the dev log post!');
+                return;
+            }
+            
+            let posts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
+            const now = new Date();
+            const newPost = {
+                content: postContent,
+                date: now.toLocaleDateString(),
+                hour: now.getHours(),
+                timestamp: now.getTime(),
+                id: Date.now()
+            };
+            posts.unshift(newPost); // Add to beginning
+            localStorage.setItem('devLogPosts', JSON.stringify(posts));
+            
+            document.getElementById('newDevLogPost').value = '';
+            loadDevLogPosts();
+            alert('Dev log post added!');
+        }
+        
+        function deleteDevLogPost(index) {
+            let posts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
+            posts.splice(index, 1);
+            localStorage.setItem('devLogPosts', JSON.stringify(posts));
+            loadDevLogPosts();
+        }
+        
+        function loadDevLogPosts() {
+            const posts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
+            const container = document.getElementById('devLogList');
+            
+            if (posts.length === 0) {
+                container.innerHTML = '<p>No dev log posts yet.</p>';
+                return;
+            }
+            
+            container.innerHTML = posts.map((post, index) => `
+                <div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; background-color: white;">
+                    <div style="font-weight: bold; color: #000080;">${post.date}</div>
+                    <div style="margin: 5px 0;">${post.content}</div>
+                    <button class="btn btn-danger" onclick="deleteDevLogPost(${index})" style="font-size: 12px; padding: 4px 8px;">Delete</button>
+                </div>
+            `).join('');
+        }
+        
+        // Mood Management
+        function updateMood() {
+            const moodDescription = document.getElementById('moodDescription').value.trim();
+            localStorage.setItem('adminMoodDescription', moodDescription);
+            alert('Mood updated!');
+        }
+        
+        function loadMood() {
+            const moodDescription = localStorage.getItem('adminMoodDescription');
+            if (moodDescription) {
+                document.getElementById('moodDescription').value = moodDescription;
+            }
+        }
+        
+        // Home Thread Management
+        function updateHomeThread() {
+            const content = document.getElementById('homeThread').value.trim();
+            localStorage.setItem('adminHomeThread', content);
+            alert('Home thread updated!');
+        }
+
+        function loadHomeThread() {
+            const content = localStorage.getItem('adminHomeThread') || "Hi! My name is Sterling. I made this site because I've been super bored and finally got the domain i wanted to get my hands on, figured id get some use out of it.";
+            document.getElementById('homeThread').value = content;
+        }
+
+        // Image Management
+        function updateImage() {
+            const path = document.getElementById('imagePath').value.trim();
+            const alt = document.getElementById('imageAlt').value.trim();
+            
+            if (!path) {
+                alert('Please enter an image path!');
+                return;
+            }
+            
+            localStorage.setItem('adminImagePath', path);
+            localStorage.setItem('adminImageAlt', alt);
+            alert('Image updated!');
+        }
+
+        function loadImage() {
+            const path = localStorage.getItem('adminImagePath') || 'images/avatar.JPG';
+            const alt = localStorage.getItem('adminImageAlt') || 'Image description';
+            document.getElementById('imagePath').value = path;
+            document.getElementById('imageAlt').value = alt;
+        }
+
+        // Suggestions Management
+        function deleteSuggestion(index) {
+            let suggestions = JSON.parse(localStorage.getItem('suggestions') || '[]');
+            suggestions.splice(index, 1);
+            localStorage.setItem('suggestions', JSON.stringify(suggestions));
+            loadSuggestions();
+        }
+
+        function clearAllSuggestions() {
+            if (confirm('Are you sure you want to delete all suggestions?')) {
+                localStorage.removeItem('suggestions');
+                loadSuggestions();
+            }
+        }
+
+        function loadSuggestions() {
+            const suggestions = JSON.parse(localStorage.getItem('suggestions') || '[]');
+            const container = document.getElementById('suggestionsList');
+            
+            if (suggestions.length === 0) {
+                container.innerHTML = '<p>No suggestions yet.</p>';
+                return;
+            }
+            
+            container.innerHTML = suggestions.map((s, index) => `
+                <div class="suggestion-item">
+                    <div class="meta">${s.timestamp}</div>
+                    <div class="content"><strong>${s.name}:</strong> "${s.suggestion}"</div>
+                    <button class="btn btn-danger" onclick="deleteSuggestion(${index})">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        // Data Export/Import
+        function exportData() {
+            const data = {
+                quotes: JSON.parse(localStorage.getItem('adminQuotes') || '[]'),
+                homeThread: localStorage.getItem('adminHomeThread') || '',
+                imagePath: localStorage.getItem('adminImagePath') || 'images/avatar.JPG',
+                imageAlt: localStorage.getItem('adminImageAlt') || '',
+                suggestions: JSON.parse(localStorage.getItem('suggestions') || '[]')
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'stag-city-data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData() {
+            document.getElementById('importFile').click();
+        }
+
+        function handleImport() {
+            const file = document.getElementById('importFile').files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (data.quotes) localStorage.setItem('adminQuotes', JSON.stringify(data.quotes));
+                    if (data.homeThread) localStorage.setItem('adminHomeThread', data.homeThread);
+                    if (data.imagePath) localStorage.setItem('adminImagePath', data.imagePath);
+                    if (data.imageAlt) localStorage.setItem('adminImageAlt', data.imageAlt);
+                    if (data.suggestions) localStorage.setItem('suggestions', JSON.stringify(data.suggestions));
+                    
+                    alert('Data imported successfully!');
+                    location.reload();
+                } catch (error) {
+                    alert('Error importing data: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>
