@@ -233,6 +233,8 @@
     </div>
     
     <script>
+        console.log('Script starting...');
+        
         const sections = document.querySelectorAll("section");
 
         [...sections].forEach((section) => {
@@ -633,7 +635,9 @@
           }
           
           // Load site stats
+          console.log('About to call loadSiteStats()');
           loadSiteStats();
+          console.log('loadSiteStats() called');
         });
     </script>
 </body>
