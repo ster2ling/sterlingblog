@@ -365,15 +365,18 @@
                 siteAgeDisplay = `${siteAgeDays} day${siteAgeDays > 1 ? 's' : ''}`;
             }
             
-            // Calculate uptime in hours (based on site creation time)
-            const uptimeMs = Date.now() - (stats.firstVisit || Date.now());
+            // Calculate uptime in hours (based on current deployment)
+            // For now, we'll use a fixed deployment timestamp
+            // You can update this timestamp when you deploy
+            const deploymentTime = 1761594846233; // Update this timestamp on each deployment
+            const uptimeMs = Date.now() - deploymentTime;
             const uptimeHours = Math.floor(uptimeMs / (1000 * 60 * 60));
             const uptimeMinutes = Math.floor((uptimeMs % (1000 * 60 * 60)) / (1000 * 60));
             
             console.log('Stats from server:', stats);
             console.log('Uptime calculation:', {
               currentTime: Date.now(),
-              firstVisit: stats.firstVisit,
+              deploymentTime: deploymentTime,
               uptimeMs: uptimeMs,
               uptimeHours: uptimeHours,
               uptimeMinutes: uptimeMinutes
