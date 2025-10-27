@@ -7,6 +7,11 @@
         <link rel="icon" type="image/x-icon" href="../favicon.ico">
         <link rel="apple-touch-icon" href="../favicon.svg">
         <link rel="stylesheet" href="../style.css">
+
+    <script>
+      window.BUILD_TIME = 1761595031501;
+      window.VERCEL_BUILD_TIME = 1761595031501;
+    </script>
 </head>
 <body>
       <div id="starfield-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -100;">
@@ -364,9 +369,9 @@
             }
             
             // Calculate uptime in hours (based on current deployment)
-            // For now, we'll use a fixed deployment timestamp
-            // You can update this timestamp when you deploy
-            const deploymentTime = 1761594846233; // Update this timestamp on each deployment
+            // Use Vercel's deployment timestamp or fallback to build time
+            const deploymentTime = window.VERCEL_BUILD_TIME || 
+                                 (window.BUILD_TIME ? parseInt(window.BUILD_TIME) : Date.now());
             const uptimeMs = Date.now() - deploymentTime;
             const uptimeHours = Math.floor(uptimeMs / (1000 * 60 * 60));
             const uptimeMinutes = Math.floor((uptimeMs % (1000 * 60 * 60)) / (1000 * 60));
