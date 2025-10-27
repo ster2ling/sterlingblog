@@ -132,7 +132,11 @@ async function updateAdminSettings(settings) {
 app.get('/api/stats', async (req, res) => {
     try {
         const stats = await getSiteStats();
-        res.json(stats);
+        res.json({
+            visitorCount: stats.visitor_count,
+            firstVisit: stats.first_visit,
+            lastUpdated: stats.last_updated
+        });
     } catch (error) {
         console.error('Error getting site stats:', error);
         res.status(500).json({ error: 'Failed to read site stats' });
@@ -148,15 +152,19 @@ app.post('/api/stats', async (req, res) => {
         
         const updatedStats = {
             id: 1, // Single row for site stats
-            visitorCount: visitorCount || (currentStats.visitorCount || 0) + 1,
-            firstVisit: firstVisit || currentStats.firstVisit || Date.now(),
-            lastUpdated: Date.now()
+            visitor_count: visitorCount || (currentStats.visitor_count || 0) + 1,
+            first_visit: firstVisit || currentStats.first_visit || Date.now(),
+            last_updated: Date.now()
         };
         
         console.log('New stats to save:', updatedStats);
         const stats = await updateSiteStats(updatedStats);
         console.log('Successfully updated site stats:', stats);
-        res.json(stats);
+        res.json({
+            visitorCount: stats.visitor_count,
+            firstVisit: stats.first_visit,
+            lastUpdated: stats.last_updated
+        });
     } catch (error) {
         console.error('Error updating site stats:', error);
         res.status(500).json({ error: 'Failed to update site stats', details: error.message });
