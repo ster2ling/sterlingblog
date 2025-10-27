@@ -97,3 +97,4 @@ pm2 start server.js --name "sterling-blog"
 - If data isn't syncing, check the browser console for API errors
 - The site will fallback to localStorage if the server is unavailable
 - Check the `data/` directory for JSON files to verify data persistence
+# Deployment test
