@@ -249,16 +249,6 @@ app.delete('/api/devlog/:id', async (req, res) => {
     }
 });
 
-// Test endpoint to check environment variables
-app.get('/api/test', (req, res) => {
-    res.json({
-        hasSupabaseUrl: !!process.env.SUPABASE_URL,
-        hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY,
-        supabaseUrl: process.env.SUPABASE_URL ? 'Set' : 'Missing',
-        supabaseKey: process.env.SUPABASE_ANON_KEY ? 'Set' : 'Missing'
-    });
-});
-
 // Admin Settings API
 app.get('/api/admin/settings', async (req, res) => {
     try {
@@ -272,11 +262,13 @@ app.get('/api/admin/settings', async (req, res) => {
 
 app.post('/api/admin/settings', async (req, res) => {
     try {
+        console.log('Updating admin settings:', req.body);
         const settings = await updateAdminSettings(req.body);
+        console.log('Successfully updated:', settings);
         res.json(settings);
     } catch (error) {
         console.error('Error updating admin settings:', error);
-        res.status(500).json({ error: 'Failed to update admin settings' });
+        res.status(500).json({ error: 'Failed to update admin settings', details: error.message });
     }
 });
 
