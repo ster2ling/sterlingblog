@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html>
+<head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+        <title>Sterling</title>
+        <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+        <link rel="icon" type="image/x-icon" href="../favicon.ico">
+        <link rel="apple-touch-icon" href="../favicon.svg">
+        <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+      <div id="starfield-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -100;">
+        <canvas id="starfield" style="width: 100%; height: 100%;"></canvas>
+      </div>
+      <script src="../js/starfield.js"></script>
+    
+      <div id="container" style="position: relative; z-index: 1; background-color: transparent;">
+        
+        <div class="navbar-window">
+          <div id="navbar">
+            <a href="index.html" class="nav-button">
+              <img src="../images/home window icon.png" alt="Home">
+              <span>Home</span>
+            </a>
+            <a href="about.html" class="nav-button">
+              <img src="images/about window icon.png" alt="About">
+              <span>About</span>
+            </a>
+            <a href="#.html" class="nav-button">
+              <img src="images/art window icon.png" alt="">
+              <span></span>
+            </a>
+            <a href="Blog.html" class="nav-button">
+              <img src="images/writing window icon.png" alt="Blog">
+              <span>Blog</span>
+            </a>
+            <a href="../quotebook/" class="nav-button">
+              <img src="images/stag city window icon 2.png" alt="Quotebook">
+              <span>Quotebook</span>
+            </a>
+            <a href="other.html" class="nav-button">
+              <img src="images/other window icon.png" alt="Other">
+              <span>Other</span>
+            </a>
+            <a href="basement.html" class="nav-button"> 
+              <img src="images/basement window icon.png" alt="Basement">
+              <span>Basement</span>
+            </a>
+          </div>
+        </div>
+    
+        <div id="sidebar">
+          <div class="window">
+            <div class="title-bar">
+              <div class="title-bar-text"><b>Site Suggestions</b></div>
+            </div>
+            <div class="window-body">
+                <h4 style="margin: 0 0 5px 0; font-weight: bold; text-decoration: underline; color: #000080;">Suggestion History</h4>
+                <div class="status-bar" style="height: 180px; overflow-y: auto; border: 2px solid #808080; border-style: inset; padding: 10px; margin-bottom: 10px; background-color: #f0f0f0; font-family: 'Pixel Operator', monospace;">
+                  <div id="suggestion-history" style="line-height: 1.4;">
+                    <p style="font-style: italic; color: #666;">No suggestions yet. Be the first!</p>
+                  </div>
+                </div>
+                <form>
+                  <div class="field-row">
+                    <input type="text" id="name" placeholder="Enter a name, or stay anonymous!" style="font-size: 12px; width: 100%;">
+                  </div>
+                  <div class="field-row">
+                    <input type="text" id="suggestion" placeholder="Your suggestion..." style="width: 100%;">
+                  </div>
+                  <div class="field-row" style="justify-content: flex-end; margin-top: 8px;">
+                    <button type="button" onclick="submitSuggestion()">Submit</button>
+                  </div>
+                </form>
+            </div>
+          </div>
+          <div class="window" id="deco" style="margin-top: 10px;">
+            <div class="title-bar">
+              <div class="title-bar-text"><b>SITE STATS</b></div>
+            </div>
+            <div class="window-body">
+              <div style="background: linear-gradient(135deg, #c0c0c0 0%, #d0d0d0 50%, #c0c0c0 100%); height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: 'Pixel Operator', monospace; color: #000000; border: 2px inset #c0c0c0; box-shadow: inset 1px 1px 2px #808080, inset -1px -1px 2px #ffffff;">
+                <div style="margin-bottom: 3px; font-size: 13px; font-weight: bold; text-shadow: 1px 1px 0px #ffffff;">
+                  Visitor Count: <span id="visitor-count" style="font-weight: bold;">1</span>
+                </div>
+                <div style="margin-bottom: 3px; font-size: 13px; font-weight: bold; text-shadow: 1px 1px 0px #ffffff;">
+                  Last Update: <span id="time-since-update" style="font-weight: bold;">Never</span>
+                </div>
+                <div style="margin-bottom: 3px; font-size: 13px; font-weight: bold; text-shadow: 1px 1px 0px #ffffff;">
+                  Site Age: <span id="site-age" style="font-weight: bold;">1 day</span>
+                </div>
+                <div style="margin-bottom: 3px; font-size: 13px; font-weight: bold; text-shadow: 1px 1px 0px #ffffff;">
+                  Uptime: <span id="uptime" style="font-weight: bold;">0h</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="window" style="margin-top: 10px;">
+            <div class="title-bar">
+              <div class="title-bar-text"><b>Image of the Week</b></div>
+            </div>
+            <div class="window-body">
+              <span style="font-size: small; align-content: justify;"><u>F</u>ile <u>E</u>dit <u>V</u>iew 
+                <a href="https://jonimitchell.com/paintings/" target="_blank">Artist</a> <u>H</u>elp
+              </span>
+              <fieldset>
+                <img src="../images/avatar.JPG" style="width: 100%; height: auto; display: block;">
+              </fieldset>
+              <p style="font-size: small;">"Untitled" (self-portrait), 2025, Digital Camera</p>
+            </div>
+            </div>
+        </div>
+        
+        <div id="main">
+          <div class="window">
+            <div class="window-body" style="text-align: justify; display: flex; flex-direction: column; height: 100%;">
+              <div class="row">
+                <div class="column">
+                  <h1 style="font-family: ADDSBP, 'ADDSBP', sans-serif; font-size: 25px; font-weight: bold; color: rgb(0, 0, 128); text-align: center; margin: 16.75px 0; width: 238.297px; box-sizing: border-box;">Hey!</h1>
+                  <p id="home-thread-part1">Hi! My name is Sterling. I made this site because I've been super bored and finally got the domain i wanted to get my hands on, figured id get some use out of it.</p>
+                  
+                  <p style="text-align: center; font-weight: bold; margin: 10px 0;"><a href="essayonline.html">Blog Coming Soon!</a></p>
+                  
+                  <p id="home-thread-part2" style="margin-top: 10px;"></p>
+                </div>
+                <div class="column" style="padding-left: 15px;">
+                  <img src="../images/avatar.JPG" style="margin-top: 10%; margin-bottom: 10px; width: 221px; height: auto; object-fit: cover; object-position: left;">
+                  <fieldset style="width: 221px; box-sizing: border-box; margin-top: 0;">
+                    <legend>Have you been outside today?</legend>
+                    <div class="field-row">
+                      <input id="radio5" type="radio" name="first-example" value="PLAY" onclick="playyay()">
+                      <label for="radio5">Yes</label>
+                      <audio id="audioyay" src="https://cdn.freesound.org/previews/428/428156_8014960-lq.mp3"></audio>
+                    </div>
+                    <div class="field-row">
+                      <input id="radio6" type="radio" name="first-example">
+                      <label for="radio6">No</label>
+                    </div>
+                  </fieldset>
+                  <img src="graphics/cato.gif" style="width: 150px; margin-left: 15%;" id="deco">
+                </div>
+                </div>
+                </div>
+            <!-- Filler content to push blinkies to bottom -->
+            <div style="flex-grow: 1;"></div>
+            <div class="blinkiecontainter" style="position: absolute; bottom: 10px; left: 20px; right: 20px; margin-top: 10px;">
+                <marquee>
+                  <img src="https://adriansblinkiecollection.neocities.org/y30.gif" style="height: 20px; margin: 0 5px;">
+                  <img src="https://adriansblinkiecollection.neocities.org/z15.gif" style="height: 20px; margin: 0 5px;">
+                  <img src="https://adriansblinkiecollection.neocities.org/y60.gif" style="height: 20px; margin: 0 5px;">
+                </marquee>
+            </div>
+                </div>
+            </div>
+            
+        <div id="activity" style="width: 251.25px; height: 390px;">
+          <div class="window" style="width: 251.25px; height: 346.766px;">
+            <div class="title-bar">
+              <div class="title-bar-text"><b>Activity log</b></div>
+            </div>
+            <div class="window-body" style="padding: 0px;">
+              <div class="sunken-panel">
+                <table>
+                  <tbody>
+                    <tr>
+                      <td><b>Reading</b></td>
+                                <td id="reading-status">Nothing at the moment</td>
+                            </tr>
+                            <tr>
+                      <td><b>Watching</b></td>
+                                <td id="watching-status">How I Met Your Mother</td>
+                            </tr>
+                            <tr>
+                      <td><b>Listening</b></td>
+                                <td id="listening-status">Rock, Indie, Everything</td>
+                            </tr>
+                            <tr>
+                      <td><b>Playing</b></td>
+                                <td id="playing-status">Minecraft!</td>
+                            </tr>
+                  </tbody>
+                        </table>
+                            </div>
+                        </div>
+            <article>
+              <fieldset>
+                <div style="margin-bottom: 5px;">
+                  <span style="font-weight: bold; text-decoration: underline;">Currently feeling:</span> 
+                  <img src="https://moods.imood.com/display/uname-sterling/fg-000000/trans-1/imood.gif" alt="The current mood of sterling at www.imood.com" style="vertical-align: text-bottom; display: inline-block; margin-bottom: .7px;">
+                </div>
+                <div style="margin-left: 0px; font-size: 16px; max-height: 60px; overflow-y: auto; word-wrap: break-word;" id="mood-description">i want to see my girlfriend</div>
+              </fieldset>
+            </article>
+            <fieldset id="wisdom-fieldset">
+              <legend><h3 style="text-align: center; text-decoration: underline; margin: 0;">YOUR WISDOM IS</h3></legend>
+              <div id="quoteDisplay">
+                <script src="../quotes.js"></script>
+              </div>
+            </fieldset>
+                    </div>
+                </div>
+                
+        <div id="updates">
+          <div class="window">
+            <div class="title-bar">
+              <div class="title-bar-text">Devlog</div>
+            </div>
+            <div class="window-body">
+              <ul class="tree-view" style="width: 229.250px; height: 200px; padding: 6px; overflow-x: hidden; overflow-y: scroll;" id="Devlog">
+                <li><b>- Coming soon!</b></li>
+                <ul>
+                  <li>This devlog will be updated with site changes and updates.</li>
+                </ul>
+              </ul>
+            </div>
+            <img src="../images/devlog laptop.gif" id="deco" style="margin-left: 17%;">
+                    </div>
+                </div>
+                
+        <footer id="footer">
+          <div class="window">
+            <div class="window-body">
+              <div class="status-bar">
+                <p class="status-bar-field"><a href="sitemap.html">sitemap</a></p>
+                <p class="status-bar-field">This website is brought to you by: spite.</p>
+                <p class="status-bar-field">anno 21 Dec 2023</p>
+                </div>
+            </div>
+        </div>
+        </footer>
+                  
+    </div>
+    
+    <script>
+        const sections = document.querySelectorAll("section");
+
+        [...sections].forEach((section) => {
+          const checkbox = section.querySelector("input");
+
+          checkbox.addEventListener("change", () => {
+            section.classList.toggle("enable-animation");
+          });
+        });
+    </script>
+      
+      <script>
+        // Grass confetti effect
+        function createGrassConfetti() {
+            const colors = ['#2E8B57', '#3CB371', '#228B22', '#32CD32', '#90EE90', '#9ACD32', '#6B8E23', '#556B2F', '#8FBC8F'];
+            const confettiCount = 100;
+            
+            for (let i = 0; i < confettiCount; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.style.position = 'fixed';
+                    confetti.style.width = Math.random() * 3 + 2 + 'px'; // Narrower like grass blades
+                    confetti.style.height = Math.random() * 40 + 20 + 'px'; // Taller like grass blades
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.left = Math.random() * window.innerWidth + 'px';
+                    confetti.style.top = '-40px';
+                    confetti.style.zIndex = '9999';
+                    confetti.style.borderRadius = '50%'; // More rounded like grass blades
+                    confetti.style.pointerEvents = 'none';
+                    confetti.style.transformOrigin = 'center bottom'; // Rotate from bottom like grass
+                    
+                    // Add gradient effect to look more like grass
+                    confetti.style.background = `linear-gradient(90deg, ${colors[Math.floor(Math.random() * colors.length)]}, ${colors[Math.floor(Math.random() * colors.length)]})`;
+                    
+                    document.body.appendChild(confetti);
+                    
+                    // Animation with more natural grass movement
+                    const animation = confetti.animate([
+                        { transform: 'translateY(0px) rotate(0deg)', opacity: 1 },
+                        { transform: `translateY(${window.innerHeight + 100}px) rotate(${Math.random() * 180 - 90}deg)`, opacity: 0 }
+                    ], {
+                        duration: Math.random() * 4000 + 3000,
+                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                    });
+                    
+                    animation.onfinish = () => {
+                        confetti.remove();
+                    };
+                }, i * 30); // Faster spawning for more grass
+            }
+        }
+        
+        function playyay() {
+          var audio = document.getElementById("audioyay");
+          audio.play();
+          createGrassConfetti();
+        }
+        
+        // Site stats management
+        function loadSiteStats() {
+          // Get real stats from localStorage
+          const devLogPosts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
+          
+          // Increment visitor count (actually functional)
+          const stats = JSON.parse(localStorage.getItem('siteStats') || '{}');
+          const visitorCount = (stats.visitorCount || 0) + 1;
+          localStorage.setItem('siteStats', JSON.stringify({
+            ...stats,
+            visitorCount: visitorCount
+          }));
+          
+          // Calculate time since last update (hours-based)
+          let timeSinceUpdate = 'Never';
+          if (devLogPosts.length > 0) {
+            const latestPost = devLogPosts[0]; // Posts are sorted newest first
+            if (latestPost.timestamp) {
+              const postTime = latestPost.timestamp;
+              const now = Date.now();
+              const diffMs = now - postTime;
+              const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+              const diffMinutes = Math.floor(diffMs / (1000 * 60));
+              
+              if (diffHours > 0) {
+                timeSinceUpdate = `${diffHours}h ago`;
+              } else if (diffMinutes > 0) {
+                timeSinceUpdate = `${diffMinutes}m ago`;
+              } else {
+                timeSinceUpdate = 'Just now';
+              }
+            } else if (latestPost.date) {
+              // Fallback to date parsing if timestamp not available
+              const postDate = new Date(latestPost.date);
+              const now = new Date();
+              const diffMs = now - postDate;
+              const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+              const diffMinutes = Math.floor(diffMs / (1000 * 60));
+              
+              if (diffHours > 0) {
+                timeSinceUpdate = `${diffHours}h ago`;
+              } else if (diffMinutes > 0) {
+                timeSinceUpdate = `${diffMinutes}m ago`;
+              } else {
+                timeSinceUpdate = 'Just now';
+              }
+            }
+          }
+          
+          // Calculate site age (days since first visit)
+          const siteAge = Math.floor((Date.now() - (stats.firstVisit || Date.now())) / (1000 * 60 * 60 * 24)) + 1;
+          if (!stats.firstVisit) {
+            localStorage.setItem('siteStats', JSON.stringify({
+              ...stats,
+              visitorCount: visitorCount,
+              firstVisit: Date.now()
+            }));
+          }
+          
+          // Calculate uptime in hours (simulated - based on site age)
+          const uptimeHours = siteAge * 24;
+          
+          // Update display with real stats
+          document.getElementById('visitor-count').textContent = visitorCount.toLocaleString();
+          document.getElementById('time-since-update').textContent = timeSinceUpdate;
+          document.getElementById('site-age').textContent = `${siteAge} day${siteAge > 1 ? 's' : ''}`;
+          document.getElementById('uptime').textContent = `${uptimeHours}h`;
+        }
+
+        // Suggestion functionality
+        function submitSuggestion() {
+          const nameInput = document.getElementById('name');
+          const suggestionInput = document.getElementById('suggestion');
+          
+          const name = nameInput.value.trim() || 'Anonymous';
+          const suggestion = suggestionInput.value.trim();
+          
+          if (!suggestion) {
+            alert('Please enter a suggestion!');
+            return;
+          }
+          
+          // Get existing suggestions from localStorage
+          let suggestions = JSON.parse(localStorage.getItem('suggestions') || '[]');
+          
+          // Add new suggestion
+          const newSuggestion = {
+            name: name,
+            suggestion: suggestion,
+            timestamp: new Date().toLocaleString()
+          };
+          
+          suggestions.unshift(newSuggestion); // Add to beginning
+          
+          // Store back to localStorage
+          localStorage.setItem('suggestions', JSON.stringify(suggestions));
+          
+          // Update display
+          updateSuggestionHistory();
+          
+          // Clear inputs
+          nameInput.value = '';
+          suggestionInput.value = '';
+        }
+        
+        function updateSuggestionHistory() {
+          const suggestions = JSON.parse(localStorage.getItem('suggestions') || '[]');
+          const historyDiv = document.getElementById('suggestion-history');
+          
+          if (suggestions.length === 0) {
+            historyDiv.innerHTML = '<p style="font-style: italic; color: #666;">No suggestions yet. Be the first!</p>';
+          } else {
+            historyDiv.innerHTML = suggestions.map(s => 
+              `<div style="margin-bottom: 8px; padding: 4px; border-left: 3px solid #000080; padding-left: 8px;">
+                <div style="font-weight: bold; color: #000080;">${s.name}</div>
+                <div style="margin: 2px 0; color: #333;">"${s.suggestion}"</div>
+                <div style="font-size: 11px; color: #666;">${s.timestamp}</div>
+              </div>`
+            ).join('');
+          }
+        }
+        
+        // Load admin data when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+          updateSuggestionHistory();
+          
+          // Load admin home thread
+          const homeThread = localStorage.getItem('adminHomeThread');
+          if (homeThread) {
+            // Split the content at a natural break point (around "figured id get some use out of it")
+            const breakPoint = homeThread.indexOf('figured id get some use out of it');
+            if (breakPoint !== -1) {
+              const part1 = homeThread.substring(0, breakPoint + 'figured id get some use out of it'.length);
+              const part2 = homeThread.substring(breakPoint + 'figured id get some use out of it'.length).trim();
+              
+              document.getElementById('home-thread-part1').textContent = part1;
+              if (part2) {
+                document.getElementById('home-thread-part2').textContent = part2;
+              }
+            } else {
+              // If no break point found, put everything in part1
+              document.getElementById('home-thread-part1').textContent = homeThread;
+            }
+          }
+          
+          // Load admin image
+          const imagePath = localStorage.getItem('adminImagePath');
+          const imageAlt = localStorage.getItem('adminImageAlt');
+          if (imagePath) {
+            const imageElement = document.querySelector('#sidebar img[src*="avatar"]');
+            if (imageElement) {
+              imageElement.src = imagePath;
+              if (imageAlt) {
+                imageElement.alt = imageAlt;
+              }
+            }
+          }
+          
+          // Load admin mood description
+          const moodDescription = localStorage.getItem('adminMoodDescription');
+          if (moodDescription) {
+            const moodElement = document.getElementById('mood-description');
+            if (moodElement) {
+              moodElement.textContent = moodDescription;
+              
+              // Adjust font size and scrolling based on content length
+              const maxLength = 50; // Characters before reducing font size
+              if (moodDescription.length > maxLength) {
+                moodElement.style.fontSize = '14px';
+                moodElement.style.maxHeight = '80px';
+              }
+              if (moodDescription.length > maxLength * 2) {
+                moodElement.style.fontSize = '12px';
+                moodElement.style.maxHeight = '100px';
+              }
+            }
+          }
+          
+          // Load dev log posts
+          const devLogPosts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
+          const devLogElement = document.getElementById('Devlog');
+          if (devLogElement && devLogPosts.length > 0) {
+            devLogElement.innerHTML = devLogPosts.map(post => 
+              `<li><b>- ${post.date}</b></li>
+               <ul>
+                 <li>${post.content}</li>
+               </ul>`
+            ).join('');
+          }
+          
+          // Load activity data
+          const activityData = JSON.parse(localStorage.getItem('adminActivity') || '{}');
+          if (activityData.reading) {
+            document.getElementById('reading-status').textContent = activityData.reading;
+          }
+          if (activityData.watching) {
+            document.getElementById('watching-status').textContent = activityData.watching;
+          }
+          if (activityData.listening) {
+            document.getElementById('listening-status').textContent = activityData.listening;
+          }
+          if (activityData.playing) {
+            document.getElementById('playing-status').textContent = activityData.playing;
+          }
+          
+          // Load site stats
+          loadSiteStats();
+        });
+    </script>
+</body>
+</html>
