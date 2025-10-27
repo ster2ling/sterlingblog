@@ -706,10 +706,13 @@
 
         // Suggestions Management
         async function deleteSuggestion(id) {
+            console.log('Attempting to delete suggestion with ID:', id);
             try {
                 const response = await fetch(`/api/suggestions/${id}`, {
                     method: 'DELETE'
                 });
+                
+                console.log('Delete response status:', response.status);
                 
                 if (!response.ok) {
                     throw new Error('Failed to delete suggestion');
