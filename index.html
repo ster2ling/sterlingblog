@@ -357,12 +357,22 @@
             const uptimeHours = Math.floor(uptimeMs / (1000 * 60 * 60));
             const uptimeMinutes = Math.floor((uptimeMs % (1000 * 60 * 60)) / (1000 * 60));
             
+            console.log('Stats from server:', stats);
+            console.log('Uptime calculation:', {
+              currentTime: Date.now(),
+              firstVisit: stats.firstVisit,
+              uptimeMs: uptimeMs,
+              uptimeHours: uptimeHours,
+              uptimeMinutes: uptimeMinutes
+            });
+            
             
             // Update display with real stats
             document.getElementById('visitor-count').textContent = stats.visitorCount.toLocaleString();
             document.getElementById('time-since-update').textContent = timeSinceUpdate;
             document.getElementById('site-age').textContent = `${siteAge} day${siteAge > 1 ? 's' : ''}`;
             document.getElementById('uptime').textContent = `${uptimeHours}h ${uptimeMinutes}m`;
+            console.log('Updated uptime to:', `${uptimeHours}h ${uptimeMinutes}m`);
           } catch (error) {
             console.error('Error loading site stats:', error);
             // Fallback to localStorage if server is unavailable
