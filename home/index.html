@@ -105,7 +105,7 @@
                 <a href="https://jonimitchell.com/paintings/" target="_blank">Artist</a> <u>H</u>elp
               </span>
               <fieldset>
-                <img src="../images/avatar.JPG" style="width: 100%; height: auto; display: block;">
+                <img src="images/avatar.JPG" style="width: 100%; height: auto; display: block;">
               </fieldset>
               <p style="font-size: small;">"Untitled" (self-portrait), 2025, Digital Camera</p>
             </div>
@@ -125,7 +125,7 @@
                   <p id="home-thread-part2" style="margin-top: 10px;"></p>
                 </div>
                 <div class="column" style="padding-left: 15px;">
-                  <img src="../images/avatar.JPG" style="margin-top: 10%; margin-bottom: 10px; width: 221px; height: auto; object-fit: cover; object-position: left;">
+                  <img src="images/avatar.JPG" style="margin-top: 10%; margin-bottom: 10px; width: 221px; height: auto; object-fit: cover; object-position: left;">
                   <fieldset style="width: 221px; box-sizing: border-box; margin-top: 0;">
                     <legend>Have you been outside today?</legend>
                     <div class="field-row">
@@ -214,7 +214,7 @@
                 </ul>
               </ul>
             </div>
-            <img src="../images/devlog laptop.gif" id="deco" style="margin-left: 17%;">
+            <img src="images/devlog laptop.gif" id="deco" style="margin-left: 17%;">
                     </div>
                 </div>
                 
@@ -222,9 +222,9 @@
           <div class="window">
             <div class="window-body">
               <div class="status-bar">
-                <p class="status-bar-field"><a href="sitemap.html">sitemap</a></p>
-                <p class="status-bar-field">This website is brought to you by: spite.</p>
-                <p class="status-bar-field">anno 21 Dec 2023</p>
+                <p class="status-bar-field"><a ref="sitemap.html">sitemap</a></p>
+                <p class="status-bar-field">This website is brought to you by: boredom.</p>
+                <p class="status-bar-field">Since 26 Oct. 2025</p>
                 </div>
             </div>
         </div>
@@ -292,76 +292,93 @@
         }
         
         // Site stats management
-        function loadSiteStats() {
-          // Get real stats from localStorage
-          const devLogPosts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
-          
-          // Increment visitor count (actually functional)
-          const stats = JSON.parse(localStorage.getItem('siteStats') || '{}');
-          const visitorCount = (stats.visitorCount || 0) + 1;
-          localStorage.setItem('siteStats', JSON.stringify({
-            ...stats,
-            visitorCount: visitorCount
-          }));
-          
-          // Calculate time since last update (hours-based)
-          let timeSinceUpdate = 'Never';
-          if (devLogPosts.length > 0) {
-            const latestPost = devLogPosts[0]; // Posts are sorted newest first
-            if (latestPost.timestamp) {
-              const postTime = latestPost.timestamp;
-              const now = Date.now();
-              const diffMs = now - postTime;
-              const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-              const diffMinutes = Math.floor(diffMs / (1000 * 60));
-              
-              if (diffHours > 0) {
-                timeSinceUpdate = `${diffHours}h ago`;
-              } else if (diffMinutes > 0) {
-                timeSinceUpdate = `${diffMinutes}m ago`;
-              } else {
-                timeSinceUpdate = 'Just now';
-              }
-            } else if (latestPost.date) {
-              // Fallback to date parsing if timestamp not available
-              const postDate = new Date(latestPost.date);
-              const now = new Date();
-              const diffMs = now - postDate;
-              const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-              const diffMinutes = Math.floor(diffMs / (1000 * 60));
-              
-              if (diffHours > 0) {
-                timeSinceUpdate = `${diffHours}h ago`;
-              } else if (diffMinutes > 0) {
-                timeSinceUpdate = `${diffMinutes}m ago`;
-              } else {
-                timeSinceUpdate = 'Just now';
+        async function loadSiteStats() {
+          try {
+            // Increment visitor count on server
+            const response = await fetch('/api/stats', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({})
+            });
+            
+            if (!response.ok) {
+              throw new Error('Failed to update stats');
+            }
+            
+            const stats = await response.json();
+            
+            // Get dev log posts to calculate time since last update
+            const devLogResponse = await fetch('/api/devlog');
+            const devLogPosts = devLogResponse.ok ? await devLogResponse.json() : [];
+            
+            // Calculate time since last update (hours-based)
+            let timeSinceUpdate = 'Never';
+            if (devLogPosts.length > 0) {
+              const latestPost = devLogPosts[0]; // Posts are sorted newest first
+              if (latestPost.timestamp) {
+                const postTime = latestPost.timestamp;
+                const now = Date.now();
+                const diffMs = now - postTime;
+                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                
+                if (diffHours > 0) {
+                  timeSinceUpdate = `${diffHours}h ago`;
+                } else if (diffMinutes > 0) {
+                  timeSinceUpdate = `${diffMinutes}m ago`;
+                } else {
+                  timeSinceUpdate = 'Just now';
+                }
+              } else if (latestPost.date) {
+                // Fallback to date parsing if timestamp not available
+                const postDate = new Date(latestPost.date);
+                const now = new Date();
+                const diffMs = now - postDate;
+                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                
+                if (diffHours > 0) {
+                  timeSinceUpdate = `${diffHours}h ago`;
+                } else if (diffMinutes > 0) {
+                  timeSinceUpdate = `${diffMinutes}m ago`;
+                } else {
+                  timeSinceUpdate = 'Just now';
+                }
               }
             }
-          }
-          
-          // Calculate site age (days since first visit)
-          const siteAge = Math.floor((Date.now() - (stats.firstVisit || Date.now())) / (1000 * 60 * 60 * 24)) + 1;
-          if (!stats.firstVisit) {
+            
+            // Calculate site age (days since first visit)
+            const siteAge = Math.floor((Date.now() - (stats.firstVisit || Date.now())) / (1000 * 60 * 60 * 24)) + 1;
+            
+            // Calculate uptime in hours (simulated - based on site age)
+            const uptimeHours = siteAge * 24;
+            
+            // Update display with real stats
+            document.getElementById('visitor-count').textContent = stats.visitorCount.toLocaleString();
+            document.getElementById('time-since-update').textContent = timeSinceUpdate;
+            document.getElementById('site-age').textContent = `${siteAge} day${siteAge > 1 ? 's' : ''}`;
+            document.getElementById('uptime').textContent = `${uptimeHours}h`;
+          } catch (error) {
+            console.error('Error loading site stats:', error);
+            // Fallback to localStorage if server is unavailable
+            const stats = JSON.parse(localStorage.getItem('siteStats') || '{}');
+            const visitorCount = (stats.visitorCount || 0) + 1;
             localStorage.setItem('siteStats', JSON.stringify({
               ...stats,
-              visitorCount: visitorCount,
-              firstVisit: Date.now()
+              visitorCount: visitorCount
             }));
+            
+            document.getElementById('visitor-count').textContent = visitorCount.toLocaleString();
+            document.getElementById('time-since-update').textContent = 'Never';
+            document.getElementById('site-age').textContent = '1 day';
+            document.getElementById('uptime').textContent = '24h';
           }
-          
-          // Calculate uptime in hours (simulated - based on site age)
-          const uptimeHours = siteAge * 24;
-          
-          // Update display with real stats
-          document.getElementById('visitor-count').textContent = visitorCount.toLocaleString();
-          document.getElementById('time-since-update').textContent = timeSinceUpdate;
-          document.getElementById('site-age').textContent = `${siteAge} day${siteAge > 1 ? 's' : ''}`;
-          document.getElementById('uptime').textContent = `${uptimeHours}h`;
         }
 
         // Suggestion functionality
-        function submitSuggestion() {
+        async function submitSuggestion() {
           const nameInput = document.getElementById('name');
           const suggestionInput = document.getElementById('suggestion');
           
@@ -373,43 +390,126 @@
             return;
           }
           
-          // Get existing suggestions from localStorage
-          let suggestions = JSON.parse(localStorage.getItem('suggestions') || '[]');
-          
-          // Add new suggestion
-          const newSuggestion = {
-            name: name,
-            suggestion: suggestion,
-            timestamp: new Date().toLocaleString()
-          };
-          
-          suggestions.unshift(newSuggestion); // Add to beginning
-          
-          // Store back to localStorage
-          localStorage.setItem('suggestions', JSON.stringify(suggestions));
-          
-          // Update display
-          updateSuggestionHistory();
-          
-          // Clear inputs
-          nameInput.value = '';
-          suggestionInput.value = '';
+          try {
+            // Send suggestion to server
+            const response = await fetch('/api/suggestions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ name, suggestion })
+            });
+            
+            if (!response.ok) {
+              throw new Error('Failed to submit suggestion');
+            }
+            
+            // Update display
+            await updateSuggestionHistory();
+            
+            // Clear inputs
+            nameInput.value = '';
+            suggestionInput.value = '';
+            
+            alert('Suggestion submitted successfully!');
+          } catch (error) {
+            console.error('Error submitting suggestion:', error);
+            alert('Failed to submit suggestion. Please try again.');
+          }
         }
         
-        function updateSuggestionHistory() {
-          const suggestions = JSON.parse(localStorage.getItem('suggestions') || '[]');
-          const historyDiv = document.getElementById('suggestion-history');
-          
-          if (suggestions.length === 0) {
-            historyDiv.innerHTML = '<p style="font-style: italic; color: #666;">No suggestions yet. Be the first!</p>';
-          } else {
-            historyDiv.innerHTML = suggestions.map(s => 
-              `<div style="margin-bottom: 8px; padding: 4px; border-left: 3px solid #000080; padding-left: 8px;">
-                <div style="font-weight: bold; color: #000080;">${s.name}</div>
-                <div style="margin: 2px 0; color: #333;">"${s.suggestion}"</div>
-                <div style="font-size: 11px; color: #666;">${s.timestamp}</div>
-              </div>`
-            ).join('');
+        async function updateSuggestionHistory() {
+          try {
+            const response = await fetch('/api/suggestions');
+            if (!response.ok) {
+              throw new Error('Failed to fetch suggestions');
+            }
+            
+            const suggestions = await response.json();
+            const historyDiv = document.getElementById('suggestion-history');
+            
+            if (suggestions.length === 0) {
+              historyDiv.innerHTML = '<p style="font-style: italic; color: #666;">No suggestions yet. Be the first!</p>';
+            } else {
+              historyDiv.innerHTML = suggestions.map(s => 
+                `<div style="margin-bottom: 8px; padding: 4px; border-left: 3px solid #000080; padding-left: 8px;">
+                  <div style="font-weight: bold; color: #000080;">${s.name}</div>
+                  <div style="margin: 2px 0; color: #333;">"${s.suggestion}"</div>
+                  <div style="font-size: 11px; color: #666;">${s.timestamp}</div>
+                </div>`
+              ).join('');
+            }
+          } catch (error) {
+            console.error('Error loading suggestions:', error);
+            // Fallback to localStorage
+            const suggestions = JSON.parse(localStorage.getItem('suggestions') || '[]');
+            const historyDiv = document.getElementById('suggestion-history');
+            
+            if (suggestions.length === 0) {
+              historyDiv.innerHTML = '<p style="font-style: italic; color: #666;">No suggestions yet. Be the first!</p>';
+            } else {
+              historyDiv.innerHTML = suggestions.map(s => 
+                `<div style="margin-bottom: 8px; padding: 4px; border-left: 3px solid #000080; padding-left: 8px;">
+                  <div style="font-weight: bold; color: #000080;">${s.name}</div>
+                  <div style="margin: 2px 0; color: #333;">"${s.suggestion}"</div>
+                  <div style="font-size: 11px; color: #666;">${s.timestamp}</div>
+                </div>`
+              ).join('');
+            }
+          }
+        }
+        
+        // Dev log functionality
+        async function loadDevLogPosts() {
+          try {
+            const response = await fetch('/api/devlog');
+            if (!response.ok) {
+              throw new Error('Failed to fetch dev log posts');
+            }
+            
+            const devLogPosts = await response.json();
+            const devLogElement = document.getElementById('Devlog');
+            
+            if (devLogElement) {
+              if (devLogPosts.length === 0) {
+                devLogElement.innerHTML = `
+                  <li><b>- Coming soon!</b></li>
+                  <ul>
+                    <li>This devlog will be updated with site changes and updates.</li>
+                  </ul>
+                `;
+              } else {
+                devLogElement.innerHTML = devLogPosts.map(post => 
+                  `<li><b>- ${post.date}</b></li>
+                   <ul>
+                     <li>${post.content}</li>
+                   </ul>`
+                ).join('');
+              }
+            }
+          } catch (error) {
+            console.error('Error loading dev log posts:', error);
+            // Fallback to localStorage
+            const devLogPosts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
+            const devLogElement = document.getElementById('Devlog');
+            
+            if (devLogElement) {
+              if (devLogPosts.length === 0) {
+                devLogElement.innerHTML = `
+                  <li><b>- Coming soon!</b></li>
+                  <ul>
+                    <li>This devlog will be updated with site changes and updates.</li>
+                  </ul>
+                `;
+              } else {
+                devLogElement.innerHTML = devLogPosts.map(post => 
+                  `<li><b>- ${post.date}</b></li>
+                   <ul>
+                     <li>${post.content}</li>
+                   </ul>`
+                ).join('');
+              }
+            }
           }
         }
         
@@ -470,16 +570,7 @@
           }
           
           // Load dev log posts
-          const devLogPosts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
-          const devLogElement = document.getElementById('Devlog');
-          if (devLogElement && devLogPosts.length > 0) {
-            devLogElement.innerHTML = devLogPosts.map(post => 
-              `<li><b>- ${post.date}</b></li>
-               <ul>
-                 <li>${post.content}</li>
-               </ul>`
-            ).join('');
-          }
+          loadDevLogPosts();
           
           // Load activity data
           const activityData = JSON.parse(localStorage.getItem('adminActivity') || '{}');

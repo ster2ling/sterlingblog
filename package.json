@@ -1,13 +1,19 @@
 {
-  "name": "retro-tutorial",
+  "name": "sterling-blog",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Sterling's personal blog with server-side data sync",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["blog", "personal", "retro"],
+  "author": "Sterling",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
 }

@@ -359,34 +359,76 @@
         }
         
         // Site Stats Management
-        function resetVisitorCount() {
+        async function resetVisitorCount() {
             const newCount = document.getElementById('visitorCount').value;
             if (newCount && !isNaN(newCount)) {
-                localStorage.setItem('siteStats', JSON.stringify({
-                    visitorCount: parseInt(newCount)
-                }));
-                alert('Visitor count reset!');
-                loadSiteStats();
+                try {
+                    const response = await fetch('/api/stats', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ visitorCount: parseInt(newCount) })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to reset visitor count');
+                    }
+                    
+                    alert('Visitor count reset!');
+                    await loadSiteStats();
+                } catch (error) {
+                    console.error('Error resetting visitor count:', error);
+                    alert('Failed to reset visitor count. Please try again.');
+                }
             }
         }
         
-        function loadSiteStats() {
-            const devLogPosts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
-            const suggestions = JSON.parse(localStorage.getItem('suggestions') || '[]');
-            const adminQuotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
-            const defaultQuotes = 5;
-            const totalQuotes = adminQuotes.length > 0 ? adminQuotes.length : defaultQuotes;
-            
-            let lastUpdated = 'Never';
-            if (devLogPosts.length > 0) {
-                const latestPost = devLogPosts[0];
-                lastUpdated = latestPost.date || 'Unknown';
+        async function loadSiteStats() {
+            try {
+                // Get stats from server
+                const statsResponse = await fetch('/api/stats');
+                const devLogResponse = await fetch('/api/devlog');
+                const suggestionsResponse = await fetch('/api/suggestions');
+                
+                const stats = statsResponse.ok ? await statsResponse.json() : {};
+                const devLogPosts = devLogResponse.ok ? await devLogResponse.json() : [];
+                const suggestions = suggestionsResponse.ok ? await suggestionsResponse.json() : [];
+                
+                const adminQuotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
+                const defaultQuotes = 5;
+                const totalQuotes = adminQuotes.length > 0 ? adminQuotes.length : defaultQuotes;
+                
+                let lastUpdated = 'Never';
+                if (devLogPosts.length > 0) {
+                    const latestPost = devLogPosts[0];
+                    lastUpdated = latestPost.date || 'Unknown';
+                }
+                
+                document.getElementById('admin-devlog-count').textContent = devLogPosts.length;
+                document.getElementById('admin-suggestion-count').textContent = suggestions.length;
+                document.getElementById('admin-quote-count').textContent = totalQuotes;
+                document.getElementById('admin-last-updated').textContent = lastUpdated;
+            } catch (error) {
+                console.error('Error loading site stats:', error);
+                // Fallback to localStorage
+                const devLogPosts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
+                const suggestions = JSON.parse(localStorage.getItem('suggestions') || '[]');
+                const adminQuotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
+                const defaultQuotes = 5;
+                const totalQuotes = adminQuotes.length > 0 ? adminQuotes.length : defaultQuotes;
+                
+                let lastUpdated = 'Never';
+                if (devLogPosts.length > 0) {
+                    const latestPost = devLogPosts[0];
+                    lastUpdated = latestPost.date || 'Unknown';
+                }
+                
+                document.getElementById('admin-devlog-count').textContent = devLogPosts.length;
+                document.getElementById('admin-suggestion-count').textContent = suggestions.length;
+                document.getElementById('admin-quote-count').textContent = totalQuotes;
+                document.getElementById('admin-last-updated').textContent = lastUpdated;
             }
-            
-            document.getElementById('admin-devlog-count').textContent = devLogPosts.length;
-            document.getElementById('admin-suggestion-count').textContent = suggestions.length;
-            document.getElementById('admin-quote-count').textContent = totalQuotes;
-            document.getElementById('admin-last-updated').textContent = lastUpdated;
         }
         
         // Activity Management
@@ -502,53 +544,94 @@
         }
 
         // Dev Log Management
-        function addDevLogPost() {
+        async function addDevLogPost() {
             const postContent = document.getElementById('newDevLogPost').value.trim();
             if (!postContent) {
                 alert('Please enter some content for the dev log post!');
                 return;
             }
             
-            let posts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
-            const now = new Date();
-            const newPost = {
-                content: postContent,
-                date: now.toLocaleDateString(),
-                hour: now.getHours(),
-                timestamp: now.getTime(),
-                id: Date.now()
-            };
-            posts.unshift(newPost); // Add to beginning
-            localStorage.setItem('devLogPosts', JSON.stringify(posts));
-            
-            document.getElementById('newDevLogPost').value = '';
-            loadDevLogPosts();
-            alert('Dev log post added!');
-        }
-        
-        function deleteDevLogPost(index) {
-            let posts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
-            posts.splice(index, 1);
-            localStorage.setItem('devLogPosts', JSON.stringify(posts));
-            loadDevLogPosts();
-        }
-        
-        function loadDevLogPosts() {
-            const posts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
-            const container = document.getElementById('devLogList');
-            
-            if (posts.length === 0) {
-                container.innerHTML = '<p>No dev log posts yet.</p>';
-                return;
+            try {
+                const response = await fetch('/api/devlog', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content: postContent })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to add dev log post');
+                }
+                
+                document.getElementById('newDevLogPost').value = '';
+                await loadDevLogPosts();
+                alert('Dev log post added!');
+            } catch (error) {
+                console.error('Error adding dev log post:', error);
+                alert('Failed to add dev log post. Please try again.');
             }
-            
-            container.innerHTML = posts.map((post, index) => `
-                <div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; background-color: white;">
-                    <div style="font-weight: bold; color: #000080;">${post.date}</div>
-                    <div style="margin: 5px 0;">${post.content}</div>
-                    <button class="btn btn-danger" onclick="deleteDevLogPost(${index})" style="font-size: 12px; padding: 4px 8px;">Delete</button>
-                </div>
-            `).join('');
+        }
+        
+        async function deleteDevLogPost(id) {
+            try {
+                const response = await fetch(`/api/devlog/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to delete dev log post');
+                }
+                
+                await loadDevLogPosts();
+                alert('Dev log post deleted!');
+            } catch (error) {
+                console.error('Error deleting dev log post:', error);
+                alert('Failed to delete dev log post. Please try again.');
+            }
+        }
+        
+        async function loadDevLogPosts() {
+            try {
+                const response = await fetch('/api/devlog');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch dev log posts');
+                }
+                
+                const posts = await response.json();
+                const container = document.getElementById('devLogList');
+                
+                if (posts.length === 0) {
+                    container.innerHTML = '<p>No dev log posts yet.</p>';
+                    return;
+                }
+                
+                container.innerHTML = posts.map((post) => `
+                    <div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; background-color: white;">
+                        <div style="font-weight: bold; color: #000080;">${post.date}</div>
+                        <div style="margin: 5px 0;">${post.content}</div>
+                        <button class="btn btn-danger" onclick="deleteDevLogPost(${post.id})" style="font-size: 12px; padding: 4px 8px;">Delete</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading dev log posts:', error);
+                // Fallback to localStorage
+                const posts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
+                const container = document.getElementById('devLogList');
+                
+                if (posts.length === 0) {
+                    container.innerHTML = '<p>No dev log posts yet.</p>';
+                    return;
+                }
+                
+                container.innerHTML = posts.map((post, index) => `
+                    <div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; background-color: white;">
+                        <div style="font-weight: bold; color: #000080;">${post.date}</div>
+                        <div style="margin: 5px 0;">${post.content}</div>
+                        <button class="btn btn-danger" onclick="deleteDevLogPost(${index})" style="font-size: 12px; padding: 4px 8px;">Delete</button>
+                    </div>
+                `).join('');
+            }
         }
         
         // Mood Management
@@ -600,36 +683,92 @@
         }
 
         // Suggestions Management
-        function deleteSuggestion(index) {
-            let suggestions = JSON.parse(localStorage.getItem('suggestions') || '[]');
-            suggestions.splice(index, 1);
-            localStorage.setItem('suggestions', JSON.stringify(suggestions));
-            loadSuggestions();
+        async function deleteSuggestion(id) {
+            try {
+                const response = await fetch(`/api/suggestions/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to delete suggestion');
+                }
+                
+                await loadSuggestions();
+                alert('Suggestion deleted!');
+            } catch (error) {
+                console.error('Error deleting suggestion:', error);
+                alert('Failed to delete suggestion. Please try again.');
+            }
         }
 
-        function clearAllSuggestions() {
+        async function clearAllSuggestions() {
             if (confirm('Are you sure you want to delete all suggestions?')) {
-                localStorage.removeItem('suggestions');
-                loadSuggestions();
+                try {
+                    // Get all suggestions first to get their IDs
+                    const response = await fetch('/api/suggestions');
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch suggestions');
+                    }
+                    
+                    const suggestions = await response.json();
+                    
+                    // Delete each suggestion
+                    for (const suggestion of suggestions) {
+                        await fetch(`/api/suggestions/${suggestion.id}`, {
+                            method: 'DELETE'
+                        });
+                    }
+                    
+                    await loadSuggestions();
+                    alert('All suggestions cleared!');
+                } catch (error) {
+                    console.error('Error clearing suggestions:', error);
+                    alert('Failed to clear suggestions. Please try again.');
+                }
             }
         }
 
-        function loadSuggestions() {
-            const suggestions = JSON.parse(localStorage.getItem('suggestions') || '[]');
-            const container = document.getElementById('suggestionsList');
-            
-            if (suggestions.length === 0) {
-                container.innerHTML = '<p>No suggestions yet.</p>';
-                return;
+        async function loadSuggestions() {
+            try {
+                const response = await fetch('/api/suggestions');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch suggestions');
+                }
+                
+                const suggestions = await response.json();
+                const container = document.getElementById('suggestionsList');
+                
+                if (suggestions.length === 0) {
+                    container.innerHTML = '<p>No suggestions yet.</p>';
+                    return;
+                }
+                
+                container.innerHTML = suggestions.map((s) => `
+                    <div class="suggestion-item">
+                        <div class="meta">${s.timestamp}</div>
+                        <div class="content"><strong>${s.name}:</strong> "${s.suggestion}"</div>
+                        <button class="btn btn-danger" onclick="deleteSuggestion(${s.id})">Delete</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading suggestions:', error);
+                // Fallback to localStorage
+                const suggestions = JSON.parse(localStorage.getItem('suggestions') || '[]');
+                const container = document.getElementById('suggestionsList');
+                
+                if (suggestions.length === 0) {
+                    container.innerHTML = '<p>No suggestions yet.</p>';
+                    return;
+                }
+                
+                container.innerHTML = suggestions.map((s, index) => `
+                    <div class="suggestion-item">
+                        <div class="meta">${s.timestamp}</div>
+                        <div class="content"><strong>${s.name}:</strong> "${s.suggestion}"</div>
+                        <button class="btn btn-danger" onclick="deleteSuggestion(${index})">Delete</button>
+                    </div>
+                `).join('');
             }
-            
-            container.innerHTML = suggestions.map((s, index) => `
-                <div class="suggestion-item">
-                    <div class="meta">${s.timestamp}</div>
-                    <div class="content"><strong>${s.name}:</strong> "${s.suggestion}"</div>
-                    <button class="btn btn-danger" onclick="deleteSuggestion(${index})">Delete</button>
-                </div>
-            `).join('');
         }
 
         // Data Export/Import
