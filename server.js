@@ -141,8 +141,10 @@ app.get('/api/stats', async (req, res) => {
 
 app.post('/api/stats', async (req, res) => {
     try {
+        console.log('Updating site stats with body:', req.body);
         const { visitorCount, firstVisit } = req.body;
         const currentStats = await getSiteStats();
+        console.log('Current stats:', currentStats);
         
         const updatedStats = {
             id: 1, // Single row for site stats
@@ -151,11 +153,13 @@ app.post('/api/stats', async (req, res) => {
             lastUpdated: Date.now()
         };
         
+        console.log('New stats to save:', updatedStats);
         const stats = await updateSiteStats(updatedStats);
+        console.log('Successfully updated site stats:', stats);
         res.json(stats);
     } catch (error) {
         console.error('Error updating site stats:', error);
-        res.status(500).json({ error: 'Failed to update site stats' });
+        res.status(500).json({ error: 'Failed to update site stats', details: error.message });
     }
 });
 
