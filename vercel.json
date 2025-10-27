@@ -15,5 +15,18 @@
       "src": "/(.*)",
       "dest": "/$1"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.sterling.ooo"
+        }
+      ],
+      "destination": "https://sterling.ooo/$1",
+      "permanent": true
+    }
   ]
 }
