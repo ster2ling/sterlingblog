@@ -98,6 +98,36 @@ async function deleteDevLogPost(id) {
   return true;
 }
 
+// Admin Settings functions
+async function getAdminSettings() {
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .select('*')
+    .single();
+  
+  if (error && error.code !== 'PGRST116') {
+    throw error;
+  }
+  
+  return data || {
+    mood_description: 'i want to see my girlfriend',
+    home_thread: '',
+    image_path: 'images/avatar.JPG',
+    image_alt: ''
+  };
+}
+
+async function updateAdminSettings(settings) {
+  const { data, error } = await supabase
+    .from('admin_settings')
+    .upsert({ ...settings, id: 1 }, { onConflict: 'id' })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
 // Site Stats API
 app.get('/api/stats', async (req, res) => {
     try {
@@ -216,6 +246,27 @@ app.delete('/api/devlog/:id', async (req, res) => {
     } catch (error) {
         console.error('Error deleting dev log post:', error);
         res.status(500).json({ error: 'Failed to delete dev log post' });
+    }
+});
+
+// Admin Settings API
+app.get('/api/admin/settings', async (req, res) => {
+    try {
+        const settings = await getAdminSettings();
+        res.json(settings);
+    } catch (error) {
+        console.error('Error getting admin settings:', error);
+        res.status(500).json({ error: 'Failed to get admin settings' });
+    }
+});
+
+app.post('/api/admin/settings', async (req, res) => {
+    try {
+        const settings = await updateAdminSettings(req.body);
+        res.json(settings);
+    } catch (error) {
+        console.error('Error updating admin settings:', error);
+        res.status(500).json({ error: 'Failed to update admin settings' });
     }
 });
 

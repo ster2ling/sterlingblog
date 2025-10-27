@@ -513,6 +513,55 @@
           }
         }
         
+        // Load mood from server
+        async function loadMoodFromServer() {
+          try {
+            const response = await fetch('/api/admin/settings');
+            if (!response.ok) {
+              throw new Error('Failed to fetch admin settings');
+            }
+            
+            const settings = await response.json();
+            const moodElement = document.getElementById('mood-description');
+            
+            if (moodElement && settings.mood_description) {
+              moodElement.textContent = settings.mood_description;
+              
+              // Adjust font size and scrolling based on content length
+              const maxLength = 50; // Characters before reducing font size
+              if (settings.mood_description.length > maxLength) {
+                moodElement.style.fontSize = '14px';
+                moodElement.style.maxHeight = '80px';
+              }
+              if (settings.mood_description.length > maxLength * 2) {
+                moodElement.style.fontSize = '12px';
+                moodElement.style.maxHeight = '100px';
+              }
+            }
+          } catch (error) {
+            console.error('Error loading mood from server:', error);
+            // Fallback to localStorage
+            const moodDescription = localStorage.getItem('adminMoodDescription');
+            if (moodDescription) {
+              const moodElement = document.getElementById('mood-description');
+              if (moodElement) {
+                moodElement.textContent = moodDescription;
+                
+                // Adjust font size and scrolling based on content length
+                const maxLength = 50; // Characters before reducing font size
+                if (moodDescription.length > maxLength) {
+                  moodElement.style.fontSize = '14px';
+                  moodElement.style.maxHeight = '80px';
+                }
+                if (moodDescription.length > maxLength * 2) {
+                  moodElement.style.fontSize = '12px';
+                  moodElement.style.maxHeight = '100px';
+                }
+              }
+            }
+          }
+        }
+        
         // Load admin data when page loads
         document.addEventListener('DOMContentLoaded', function() {
           updateSuggestionHistory();
@@ -550,24 +599,7 @@
           }
           
           // Load admin mood description
-          const moodDescription = localStorage.getItem('adminMoodDescription');
-          if (moodDescription) {
-            const moodElement = document.getElementById('mood-description');
-            if (moodElement) {
-              moodElement.textContent = moodDescription;
-              
-              // Adjust font size and scrolling based on content length
-              const maxLength = 50; // Characters before reducing font size
-              if (moodDescription.length > maxLength) {
-                moodElement.style.fontSize = '14px';
-                moodElement.style.maxHeight = '80px';
-              }
-              if (moodDescription.length > maxLength * 2) {
-                moodElement.style.fontSize = '12px';
-                moodElement.style.maxHeight = '100px';
-              }
-            }
-          }
+          loadMoodFromServer();
           
           // Load dev log posts
           loadDevLogPosts();

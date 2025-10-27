@@ -635,16 +635,47 @@
         }
         
         // Mood Management
-        function updateMood() {
+        async function updateMood() {
             const moodDescription = document.getElementById('moodDescription').value.trim();
-            localStorage.setItem('adminMoodDescription', moodDescription);
-            alert('Mood updated!');
+            
+            try {
+                const response = await fetch('/api/admin/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ mood_description: moodDescription })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to update mood');
+                }
+                
+                alert('Mood updated!');
+            } catch (error) {
+                console.error('Error updating mood:', error);
+                alert('Failed to update mood. Please try again.');
+            }
         }
         
-        function loadMood() {
-            const moodDescription = localStorage.getItem('adminMoodDescription');
-            if (moodDescription) {
-                document.getElementById('moodDescription').value = moodDescription;
+        async function loadMood() {
+            try {
+                const response = await fetch('/api/admin/settings');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch admin settings');
+                }
+                
+                const settings = await response.json();
+                if (settings.mood_description) {
+                    document.getElementById('moodDescription').value = settings.mood_description;
+                }
+            } catch (error) {
+                console.error('Error loading mood:', error);
+                // Fallback to localStorage
+                const moodDescription = localStorage.getItem('adminMoodDescription');
+                if (moodDescription) {
+                    document.getElementById('moodDescription').value = moodDescription;
+                }
             }
         }
         

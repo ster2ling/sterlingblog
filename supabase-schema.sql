@@ -30,10 +30,22 @@ CREATE TABLE dev_log_posts (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Admin Settings Table (for mood, home thread, etc.)
+CREATE TABLE admin_settings (
+    id INTEGER PRIMARY KEY DEFAULT 1,
+    mood_description TEXT DEFAULT 'i want to see my girlfriend',
+    home_thread TEXT DEFAULT '',
+    image_path TEXT DEFAULT 'images/avatar.JPG',
+    image_alt TEXT DEFAULT '',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE site_stats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE suggestions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dev_log_posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_settings ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for public read access
 CREATE POLICY "Allow public read access to site_stats" ON site_stats
@@ -43,6 +55,9 @@ CREATE POLICY "Allow public read access to suggestions" ON suggestions
     FOR SELECT USING (true);
 
 CREATE POLICY "Allow public read access to dev_log_posts" ON dev_log_posts
+    FOR SELECT USING (true);
+
+CREATE POLICY "Allow public read access to admin_settings" ON admin_settings
     FOR SELECT USING (true);
 
 -- Create policies for public insert/update access
@@ -55,6 +70,9 @@ CREATE POLICY "Allow public insert to dev_log_posts" ON dev_log_posts
 CREATE POLICY "Allow public update to site_stats" ON site_stats
     FOR UPDATE USING (true);
 
+CREATE POLICY "Allow public update to admin_settings" ON admin_settings
+    FOR UPDATE USING (true);
+
 -- Create policies for public delete access (for admin functionality)
 CREATE POLICY "Allow public delete from suggestions" ON suggestions
     FOR DELETE USING (true);
@@ -65,4 +83,9 @@ CREATE POLICY "Allow public delete from dev_log_posts" ON dev_log_posts
 -- Insert initial site stats
 INSERT INTO site_stats (id, visitor_count, first_visit, last_updated) 
 VALUES (1, 0, EXTRACT(EPOCH FROM NOW()) * 1000, EXTRACT(EPOCH FROM NOW()) * 1000)
+ON CONFLICT (id) DO NOTHING;
+
+-- Insert initial admin settings
+INSERT INTO admin_settings (id, mood_description, home_thread, image_path, image_alt) 
+VALUES (1, 'i want to see my girlfriend', '', 'images/avatar.JPG', '')
 ON CONFLICT (id) DO NOTHING;
