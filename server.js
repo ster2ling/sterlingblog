@@ -249,6 +249,16 @@ app.delete('/api/devlog/:id', async (req, res) => {
     }
 });
 
+// Test endpoint to check environment variables
+app.get('/api/test', (req, res) => {
+    res.json({
+        hasSupabaseUrl: !!process.env.SUPABASE_URL,
+        hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY,
+        supabaseUrl: process.env.SUPABASE_URL ? 'Set' : 'Missing',
+        supabaseKey: process.env.SUPABASE_ANON_KEY ? 'Set' : 'Missing'
+    });
+});
+
 // Admin Settings API
 app.get('/api/admin/settings', async (req, res) => {
     try {
