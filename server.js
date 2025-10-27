@@ -1,52 +1,110 @@
+require('dotenv').config();
 const express = require('express');
-const fs = require('fs').promises;
-const path = require('path');
 const cors = require('cors');
+const supabase = require('./supabase');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const DATA_DIR = path.join(__dirname, 'data');
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static('.')); // Serve static files
 
-// Ensure data directory exists
-async function ensureDataDir() {
-    try {
-        await fs.access(DATA_DIR);
-    } catch {
-        await fs.mkdir(DATA_DIR, { recursive: true });
-    }
+// Helper functions for Supabase operations
+async function getSiteStats() {
+  const { data, error } = await supabase
+    .from('site_stats')
+    .select('*')
+    .single();
+  
+  if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+    throw error;
+  }
+  
+  return data || { visitorCount: 0, firstVisit: Date.now() };
 }
 
-// Helper function to read JSON data
-async function readData(filename) {
-    try {
-        const filePath = path.join(DATA_DIR, filename);
-        const data = await fs.readFile(filePath, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        if (error.code === 'ENOENT') {
-            return []; // Return empty array for missing files
-        }
-        throw error;
-    }
+async function updateSiteStats(stats) {
+  const { data, error } = await supabase
+    .from('site_stats')
+    .upsert(stats, { onConflict: 'id' })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
 }
 
-// Helper function to write JSON data
-async function writeData(filename, data) {
-    const filePath = path.join(DATA_DIR, filename);
-    await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+async function getSuggestions() {
+  const { data, error } = await supabase
+    .from('suggestions')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return data || [];
+}
+
+async function addSuggestion(suggestion) {
+  const { data, error } = await supabase
+    .from('suggestions')
+    .insert(suggestion)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+async function deleteSuggestion(id) {
+  const { error } = await supabase
+    .from('suggestions')
+    .delete()
+    .eq('id', id);
+  
+  if (error) throw error;
+  return true;
+}
+
+async function getDevLogPosts() {
+  const { data, error } = await supabase
+    .from('dev_log_posts')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return data || [];
+}
+
+async function addDevLogPost(post) {
+  const { data, error } = await supabase
+    .from('dev_log_posts')
+    .insert(post)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+async function deleteDevLogPost(id) {
+  const { error } = await supabase
+    .from('dev_log_posts')
+    .delete()
+    .eq('id', id);
+  
+  if (error) throw error;
+  return true;
 }
 
 // Site Stats API
 app.get('/api/stats', async (req, res) => {
     try {
-        const stats = await readData('siteStats.json');
+        const stats = await getSiteStats();
         res.json(stats);
     } catch (error) {
+        console.error('Error getting site stats:', error);
         res.status(500).json({ error: 'Failed to read site stats' });
     }
 });
@@ -54,17 +112,19 @@ app.get('/api/stats', async (req, res) => {
 app.post('/api/stats', async (req, res) => {
     try {
         const { visitorCount, firstVisit } = req.body;
-        const stats = await readData('siteStats.json');
+        const currentStats = await getSiteStats();
         
         const updatedStats = {
-            visitorCount: visitorCount || (stats.visitorCount || 0) + 1,
-            firstVisit: firstVisit || stats.firstVisit || Date.now(),
+            id: 1, // Single row for site stats
+            visitorCount: visitorCount || (currentStats.visitorCount || 0) + 1,
+            firstVisit: firstVisit || currentStats.firstVisit || Date.now(),
             lastUpdated: Date.now()
         };
         
-        await writeData('siteStats.json', updatedStats);
-        res.json(updatedStats);
+        const stats = await updateSiteStats(updatedStats);
+        res.json(stats);
     } catch (error) {
+        console.error('Error updating site stats:', error);
         res.status(500).json({ error: 'Failed to update site stats' });
     }
 });
@@ -72,9 +132,10 @@ app.post('/api/stats', async (req, res) => {
 // Suggestions API
 app.get('/api/suggestions', async (req, res) => {
     try {
-        const suggestions = await readData('suggestions.json');
+        const suggestions = await getSuggestions();
         res.json(suggestions);
     } catch (error) {
+        console.error('Error getting suggestions:', error);
         res.status(500).json({ error: 'Failed to read suggestions' });
     }
 });
@@ -87,32 +148,27 @@ app.post('/api/suggestions', async (req, res) => {
             return res.status(400).json({ error: 'Suggestion content is required' });
         }
         
-        const suggestions = await readData('suggestions.json');
         const newSuggestion = {
             name: name || 'Anonymous',
             suggestion: suggestion,
-            timestamp: new Date().toLocaleString(),
-            id: Date.now()
+            timestamp: new Date().toLocaleString()
         };
         
-        suggestions.unshift(newSuggestion);
-        await writeData('suggestions.json', suggestions);
-        
-        res.json(newSuggestion);
+        const result = await addSuggestion(newSuggestion);
+        res.json(result);
     } catch (error) {
+        console.error('Error adding suggestion:', error);
         res.status(500).json({ error: 'Failed to add suggestion' });
     }
 });
 
 app.delete('/api/suggestions/:id', async (req, res) => {
     try {
-        const id = parseInt(req.params.id);
-        const suggestions = await readData('suggestions.json');
-        const filteredSuggestions = suggestions.filter(s => s.id !== id);
-        
-        await writeData('suggestions.json', filteredSuggestions);
+        const id = req.params.id;
+        await deleteSuggestion(id);
         res.json({ success: true });
     } catch (error) {
+        console.error('Error deleting suggestion:', error);
         res.status(500).json({ error: 'Failed to delete suggestion' });
     }
 });
@@ -120,9 +176,10 @@ app.delete('/api/suggestions/:id', async (req, res) => {
 // Dev Log API
 app.get('/api/devlog', async (req, res) => {
     try {
-        const posts = await readData('devLogPosts.json');
+        const posts = await getDevLogPosts();
         res.json(posts);
     } catch (error) {
+        console.error('Error getting dev log posts:', error);
         res.status(500).json({ error: 'Failed to read dev log posts' });
     }
 });
@@ -135,68 +192,38 @@ app.post('/api/devlog', async (req, res) => {
             return res.status(400).json({ error: 'Post content is required' });
         }
         
-        const posts = await readData('devLogPosts.json');
         const now = new Date();
         const newPost = {
             content: content,
             date: now.toLocaleDateString(),
             hour: now.getHours(),
-            timestamp: now.getTime(),
-            id: Date.now()
+            timestamp: now.getTime()
         };
         
-        posts.unshift(newPost);
-        await writeData('devLogPosts.json', posts);
-        
-        res.json(newPost);
+        const post = await addDevLogPost(newPost);
+        res.json(post);
     } catch (error) {
+        console.error('Error adding dev log post:', error);
         res.status(500).json({ error: 'Failed to add dev log post' });
     }
 });
 
 app.delete('/api/devlog/:id', async (req, res) => {
     try {
-        const id = parseInt(req.params.id);
-        const posts = await readData('devLogPosts.json');
-        const filteredPosts = posts.filter(p => p.id !== id);
-        
-        await writeData('devLogPosts.json', filteredPosts);
+        const id = req.params.id;
+        await deleteDevLogPost(id);
         res.json({ success: true });
     } catch (error) {
+        console.error('Error deleting dev log post:', error);
         res.status(500).json({ error: 'Failed to delete dev log post' });
-    }
-});
-
-// Admin Data API (for other admin features)
-app.get('/api/admin/:type', async (req, res) => {
-    try {
-        const { type } = req.params;
-        const data = await readData(`${type}.json`);
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: `Failed to read ${type}` });
-    }
-});
-
-app.post('/api/admin/:type', async (req, res) => {
-    try {
-        const { type } = req.params;
-        const data = req.body;
-        
-        await writeData(`${type}.json`, data);
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: `Failed to update ${type}` });
     }
 });
 
 // Initialize server
 async function startServer() {
-    await ensureDataDir();
-    
     app.listen(PORT, () => {
         console.log(`Server running on http://localhost:${PORT}`);
-        console.log(`Data directory: ${DATA_DIR}`);
+        console.log(`Using Supabase for data storage`);
     });
 }
 
