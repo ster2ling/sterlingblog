@@ -103,7 +103,7 @@
             </div>
             <div class="window-body">
               <span style="font-size: small; align-content: justify;"><u>F</u>ile <u>E</u>dit <u>V</u>iew 
-                <a href="https://jonimitchell.com/paintings/" target="_blank">Artist</a> <u>H</u>elp
+                <a href="" target="_blank">Artist</a> <u>H</u>elp
               </span>
               <fieldset>
                 <img src="images/avatar.JPG" style="width: 100%; height: auto; display: block;">
@@ -577,13 +577,18 @@
         
         // Load image settings from server
         async function loadImageFromServer() {
+          console.log('Loading image from server...');
           try {
             const response = await fetch('/api/admin/settings');
+            console.log('Image response status:', response.status);
             if (response.ok) {
               const settings = await response.json();
+              console.log('Image settings from server:', settings);
               if (settings.image_path) {
+                console.log('Updating images with path:', settings.image_path);
                 // Update all avatar images on the page
                 const avatarImages = document.querySelectorAll('img[src*="avatar"]');
+                console.log('Found avatar images:', avatarImages.length);
                 avatarImages.forEach(img => {
                   img.src = settings.image_path;
                   if (settings.image_alt) {
@@ -597,6 +602,7 @@
             // Fallback to localStorage
             const imagePath = localStorage.getItem('adminImagePath');
             const imageAlt = localStorage.getItem('adminImageAlt');
+            console.log('Falling back to localStorage:', imagePath);
             if (imagePath) {
               const avatarImages = document.querySelectorAll('img[src*="avatar"]');
               avatarImages.forEach(img => {

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basement - Sterling's Blog</title>
+    <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <link rel="apple-touch-icon" href="../favicon.svg"> 
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body {
+            background: #008080;
+            font-family: 'Pixel Operator', monospace;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .basement-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            grid-template-areas: 
+                "chatroom music-player";
+        }
+        
+        .window {
+            background: #c0c0c0;
+            border: 2px outset #c0c0c0;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            min-height: 400px;
+        }
+        
+        .title-bar {
+            background: linear-gradient(90deg, #000080, #0000ff);
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .title-bar-controls {
+            display: flex;
+            gap: 2px;
+        }
+        
+        .title-bar-controls button {
+            width: 16px;
+            height: 14px;
+            background: #c0c0c0;
+            border: 1px outset #c0c0c0;
+            font-size: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .title-bar-controls button:hover {
+            background: #d0d0d0;
+        }
+        
+        .title-bar-controls button:active {
+            border: 1px inset #c0c0c0;
+        }
+        
+        .window-content {
+            padding: 10px;
+            height: calc(100% - 30px);
+            overflow: hidden;
+        }
+        
+        /* Chatroom Styles */
+        .chatroom {
+            grid-area: chatroom;
+        }
+        
+        .chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px inset #c0c0c0;
+            background: white;
+            padding: 5px;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+        
+        .chat-input-container {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 4px;
+            border: 1px inset #c0c0c0;
+            font-family: 'Pixel Operator', monospace;
+            font-size: 12px;
+        }
+        
+        .chat-send-btn {
+            padding: 4px 8px;
+            background: #c0c0c0;
+            border: 1px outset #c0c0c0;
+            font-family: 'Pixel Operator', monospace;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .chat-send-btn:hover {
+            background: #d0d0d0;
+        }
+        
+        .chat-send-btn:active {
+            border: 1px inset #c0c0c0;
+        }
+        
+        .nickname-input {
+            width: 100px;
+            padding: 4px;
+            border: 1px inset #c0c0c0;
+            font-family: 'Pixel Operator', monospace;
+            font-size: 12px;
+        }
+        
+        .message {
+            margin-bottom: 3px;
+            word-wrap: break-word;
+        }
+        
+        .message-time {
+            color: #666;
+            font-size: 10px;
+        }
+        
+        .message-author {
+            font-weight: bold;
+            color: #000080;
+        }
+        
+        /* Music Player Styles */
+        .music-player {
+            grid-area: music-player;
+        }
+        
+        .music-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .music-btn {
+            width: 30px;
+            height: 30px;
+            background: #c0c0c0;
+            border: 1px outset #c0c0c0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        .music-btn:hover {
+            background: #d0d0d0;
+        }
+        
+        .music-btn:active {
+            border: 1px inset #c0c0c0;
+        }
+        
+        .progress-container {
+            flex: 1;
+            height: 20px;
+            background: #c0c0c0;
+            border: 1px inset #c0c0c0;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: #000080;
+            width: 0%;
+            transition: width 0.1s;
+        }
+        
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .volume-slider {
+            width: 80px;
+        }
+        
+        .playlist {
+            height: 200px;
+            overflow-y: auto;
+            border: 1px inset #c0c0c0;
+            background: white;
+        }
+        
+        .playlist-item {
+            padding: 5px;
+            border-bottom: 1px solid #ccc;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .playlist-item:hover {
+            background: #e0e0e0;
+        }
+        
+        .playlist-item.active {
+            background: #000080;
+            color: white;
+        }
+        
+        .file-upload {
+            margin-top: 10px;
+        }
+        
+        .file-upload input[type="file"] {
+            font-family: 'Pixel Operator', monospace;
+            font-size: 12px;
+        }
+        
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .basement-container {
+                grid-template-columns: 1fr;
+                grid-template-areas: 
+                    "chatroom"
+                    "music-player";
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="basement-container">
+        <!-- Chatroom -->
+        <div class="window chatroom">
+            <div class="title-bar">
+                <span>💬 Basement Chatroom</span>
+                <div class="title-bar-controls">
+                    <button aria-label="Minimize">_</button>
+                    <button aria-label="Maximize">□</button>
+                    <button aria-label="Close">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message">
+                        <span class="message-time">[System]</span> Welcome to the basement chatroom! 🎉
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" class="nickname-input" id="nickname-input" placeholder="Nickname" maxlength="20">
+                    <input type="text" class="chat-input" id="chat-input" placeholder="Type your message..." maxlength="200">
+                    <button class="chat-send-btn" id="chat-send-btn">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Music Player -->
+        <div class="window music-player">
+            <div class="title-bar">
+                <span>🎵 Music Player</span>
+                <div class="title-bar-controls">
+                    <button aria-label="Minimize">_</button>
+                    <button aria-label="Maximize">□</button>
+                    <button aria-label="Close">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="music-controls">
+                    <button class="music-btn" id="prev-btn">⏮</button>
+                    <button class="music-btn" id="play-pause-btn">▶</button>
+                    <button class="music-btn" id="next-btn">⏭</button>
+                    <div class="progress-container" id="progress-container">
+                        <div class="progress-bar" id="progress-bar"></div>
+                    </div>
+                    <div class="volume-container">
+                        <span>🔊</span>
+                        <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="50">
+                    </div>
+                </div>
+                <div class="playlist" id="playlist">
+                    <div class="playlist-item" data-src="">
+                        <strong>No music loaded</strong><br>
+                        <small>Upload some MP3 files to get started!</small>
+                    </div>
+                </div>
+                <div class="file-upload">
+                    <input type="file" id="music-upload" accept="audio/*" multiple>
+                    <button class="music-btn" id="upload-btn">Upload Music</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden audio element for music player -->
+    <audio id="audio-player" preload="metadata"></audio>
+
+    <script>
+        // Chatroom functionality
+        let chatMessages = [];
+        let currentUser = 'Anonymous';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeChatroom();
+            initializeMusicPlayer();
+            loadChatHistory();
+        });
+        
+        function initializeChatroom() {
+            const nicknameInput = document.getElementById('nickname-input');
+            const chatInput = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('chat-send-btn');
+            const chatMessages = document.getElementById('chat-messages');
+            
+            // Load saved nickname
+            const savedNickname = localStorage.getItem('basementNickname');
+            if (savedNickname) {
+                nicknameInput.value = savedNickname;
+                currentUser = savedNickname;
+            }
+            
+            // Send message on button click
+            sendBtn.addEventListener('click', sendMessage);
+            
+            // Send message on Enter key
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // Update nickname
+            nicknameInput.addEventListener('change', function() {
+                currentUser = this.value || 'Anonymous';
+                localStorage.setItem('basementNickname', currentUser);
+            });
+        }
+        
+        function sendMessage() {
+            const chatInput = document.getElementById('chat-input');
+            const message = chatInput.value.trim();
+            
+            if (message) {
+                const timestamp = new Date().toLocaleTimeString();
+                const messageObj = {
+                    author: currentUser,
+                    message: message,
+                    timestamp: timestamp,
+                    id: Date.now()
+                };
+                
+                chatMessages.push(messageObj);
+                addMessageToChat(messageObj);
+                chatInput.value = '';
+                
+                // Save to localStorage
+                localStorage.setItem('basementChat', JSON.stringify(chatMessages.slice(-50)));
+                
+                // Scroll to bottom
+                const chatContainer = document.getElementById('chat-messages');
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        }
+        
+        function addMessageToChat(messageObj) {
+            const chatContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.innerHTML = `
+                <span class="message-time">[${messageObj.timestamp}]</span>
+                <span class="message-author">${messageObj.author}:</span>
+                ${escapeHtml(messageObj.message)}
+            `;
+            chatContainer.appendChild(messageDiv);
+        }
+        
+        function loadChatHistory() {
+            const savedChat = localStorage.getItem('basementChat');
+            if (savedChat) {
+                chatMessages = JSON.parse(savedChat);
+                chatMessages.forEach(msg => addMessageToChat(msg));
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Music Player functionality
+        let playlist = [];
+        let currentTrack = 0;
+        let isPlaying = false;
+        let audio = document.getElementById('audio-player');
+        
+        function initializeMusicPlayer() {
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const progressContainer = document.getElementById('progress-container');
+            const volumeSlider = document.getElementById('volume-slider');
+            const uploadBtn = document.getElementById('upload-btn');
+            const musicUpload = document.getElementById('music-upload');
+            
+            // Load saved playlist
+            const savedPlaylist = localStorage.getItem('basementPlaylist');
+            if (savedPlaylist) {
+                playlist = JSON.parse(savedPlaylist);
+                updatePlaylistDisplay();
+            }
+            
+            // Event listeners
+            playPauseBtn.addEventListener('click', togglePlayPause);
+            prevBtn.addEventListener('click', previousTrack);
+            nextBtn.addEventListener('click', nextTrack);
+            volumeSlider.addEventListener('input', updateVolume);
+            uploadBtn.addEventListener('click', () => musicUpload.click());
+            musicUpload.addEventListener('change', handleMusicUpload);
+            
+            // Progress bar
+            progressContainer.addEventListener('click', seekToPosition);
+            
+            // Audio events
+            audio.addEventListener('timeupdate', updateProgress);
+            audio.addEventListener('ended', nextTrack);
+            audio.addEventListener('loadedmetadata', () => {
+                updateProgress();
+            });
+            
+            // Set initial volume
+            audio.volume = volumeSlider.value / 100;
+        }
+        
+        function togglePlayPause() {
+            if (playlist.length === 0) return;
+            
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            
+            if (isPlaying) {
+                audio.pause();
+                playPauseBtn.textContent = '▶';
+                isPlaying = false;
+            } else {
+                if (audio.src !== playlist[currentTrack].src) {
+                    audio.src = playlist[currentTrack].src;
+                }
+                audio.play();
+                playPauseBtn.textContent = '⏸';
+                isPlaying = true;
+            }
+        }
+        
+        function previousTrack() {
+            if (playlist.length === 0) return;
+            
+            currentTrack = (currentTrack - 1 + playlist.length) % playlist.length;
+            loadTrack();
+        }
+        
+        function nextTrack() {
+            if (playlist.length === 0) return;
+            
+            currentTrack = (currentTrack + 1) % playlist.length;
+            loadTrack();
+        }
+        
+        function loadTrack() {
+            if (playlist.length === 0) return;
+            
+            audio.src = playlist[currentTrack].src;
+            updatePlaylistDisplay();
+            
+            if (isPlaying) {
+                audio.play();
+            }
+        }
+        
+        function updateProgress() {
+            if (audio.duration) {
+                const progress = (audio.currentTime / audio.duration) * 100;
+                document.getElementById('progress-bar').style.width = progress + '%';
+            }
+        }
+        
+        function seekToPosition(e) {
+            if (audio.duration) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const percentage = clickX / rect.width;
+                audio.currentTime = percentage * audio.duration;
+            }
+        }
+        
+        function updateVolume() {
+            audio.volume = this.value / 100;
+        }
+        
+        function handleMusicUpload(e) {
+            const files = Array.from(e.target.files);
+            
+            files.forEach(file => {
+                if (file.type.startsWith('audio/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const track = {
+                            name: file.name.replace(/\.[^/.]+$/, ""),
+                            src: event.target.result,
+                            type: file.type
+                        };
+                        playlist.push(track);
+                        updatePlaylistDisplay();
+                        savePlaylist();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+        
+        function updatePlaylistDisplay() {
+            const playlistContainer = document.getElementById('playlist');
+            playlistContainer.innerHTML = '';
+            
+            if (playlist.length === 0) {
+                playlistContainer.innerHTML = `
+                    <div class="playlist-item" data-src="">
+                        <strong>No music loaded</strong><br>
+                        <small>Upload some MP3 files to get started!</small>
+                    </div>
+                `;
+                return;
+            }
+            
+            playlist.forEach((track, index) => {
+                const item = document.createElement('div');
+                item.className = 'playlist-item';
+                if (index === currentTrack) {
+                    item.classList.add('active');
+                }
+                item.innerHTML = `
+                    <strong>${track.name}</strong><br>
+                    <small>${track.type}</small>
+                `;
+                item.addEventListener('click', () => {
+                    currentTrack = index;
+                    loadTrack();
+                });
+                playlistContainer.appendChild(item);
+            });
+        }
+        
+        function savePlaylist() {
+            localStorage.setItem('basementPlaylist', JSON.stringify(playlist));
+        }
+        
+        // Track visits
+        window.addEventListener('load', function() {
+            const visits = parseInt(localStorage.getItem('basementVisits') || '0') + 1;
+            localStorage.setItem('basementVisits', visits.toString());
+        });
+    </script>
+</body>
+</html>

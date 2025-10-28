@@ -668,9 +668,15 @@
                     })
                 });
                 
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
                 if (!response.ok) {
                     throw new Error('Failed to update image settings');
                 }
+                
+                const result = await response.json();
+                console.log('Server response:', result);
                 
                 alert('Image updated!');
             } catch (error) {
