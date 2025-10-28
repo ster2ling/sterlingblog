@@ -647,7 +647,7 @@
         }
 
         // Image Management
-        function updateImage() {
+        async function updateImage() {
             const path = document.getElementById('imagePath').value.trim();
             const alt = document.getElementById('imageAlt').value.trim();
             
@@ -656,16 +656,50 @@
                 return;
             }
             
-            localStorage.setItem('adminImagePath', path);
-            localStorage.setItem('adminImageAlt', alt);
-            alert('Image updated!');
+            try {
+                const response = await fetch('/api/admin/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        image_path: path,
+                        image_alt: alt
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to update image settings');
+                }
+                
+                alert('Image updated!');
+            } catch (error) {
+                console.error('Error updating image:', error);
+                // Fallback to localStorage
+                localStorage.setItem('adminImagePath', path);
+                localStorage.setItem('adminImageAlt', alt);
+                alert('Image updated to local storage!');
+            }
         }
 
-        function loadImage() {
-            const path = localStorage.getItem('adminImagePath') || 'images/avatar.JPG';
-            const alt = localStorage.getItem('adminImageAlt') || 'Image description';
-            document.getElementById('imagePath').value = path;
-            document.getElementById('imageAlt').value = alt;
+        async function loadImage() {
+            try {
+                const response = await fetch('/api/admin/settings');
+                if (response.ok) {
+                    const settings = await response.json();
+                    document.getElementById('imagePath').value = settings.image_path || 'images/avatar.JPG';
+                    document.getElementById('imageAlt').value = settings.image_alt || '';
+                } else {
+                    throw new Error('Failed to fetch settings');
+                }
+            } catch (error) {
+                console.error('Error loading image settings:', error);
+                // Fallback to localStorage
+                const path = localStorage.getItem('adminImagePath') || 'images/avatar.JPG';
+                const alt = localStorage.getItem('adminImageAlt') || 'Image description';
+                document.getElementById('imagePath').value = path;
+                document.getElementById('imageAlt').value = alt;
+            }
         }
 
         // Suggestions Management

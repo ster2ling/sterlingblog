@@ -575,6 +575,40 @@
           }
         }
         
+        // Load image settings from server
+        async function loadImageFromServer() {
+          try {
+            const response = await fetch('/api/admin/settings');
+            if (response.ok) {
+              const settings = await response.json();
+              if (settings.image_path) {
+                // Update all avatar images on the page
+                const avatarImages = document.querySelectorAll('img[src*="avatar"]');
+                avatarImages.forEach(img => {
+                  img.src = settings.image_path;
+                  if (settings.image_alt) {
+                    img.alt = settings.image_alt;
+                  }
+                });
+              }
+            }
+          } catch (error) {
+            console.error('Error loading image from server:', error);
+            // Fallback to localStorage
+            const imagePath = localStorage.getItem('adminImagePath');
+            const imageAlt = localStorage.getItem('adminImageAlt');
+            if (imagePath) {
+              const avatarImages = document.querySelectorAll('img[src*="avatar"]');
+              avatarImages.forEach(img => {
+                img.src = imagePath;
+                if (imageAlt) {
+                  img.alt = imageAlt;
+                }
+              });
+            }
+          }
+        }
+        
         // Load mood from server
         async function loadMoodFromServer() {
           try {
@@ -648,17 +682,7 @@
           }
           
           // Load admin image
-          const imagePath = localStorage.getItem('adminImagePath');
-          const imageAlt = localStorage.getItem('adminImageAlt');
-          if (imagePath) {
-            const imageElement = document.querySelector('#sidebar img[src*="avatar"]');
-            if (imageElement) {
-              imageElement.src = imagePath;
-              if (imageAlt) {
-                imageElement.alt = imageAlt;
-              }
-            }
-          }
+          loadImageFromServer();
           
           // Load admin mood description
           loadMoodFromServer();
