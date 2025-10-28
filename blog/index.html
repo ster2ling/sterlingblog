@@ -120,25 +120,35 @@
       const sendBtn = document.getElementById('forum-send-btn');
       const forumContent = document.getElementById('forum-content');
 
+      let lastPostCount = 0;
+      
       // Load existing forum posts
       async function loadForumPosts() {
         try {
           const response = await fetch('http://localhost:3001/api/forum');
           if (response.ok) {
             const posts = await response.json();
-            forumContent.innerHTML = '';
-            posts.forEach(post => {
-              addMessageToDOM(post.message, post.author, post.date, post.time);
-            });
+            
+            // Only update if there are new posts
+            if (posts.length !== lastPostCount) {
+              forumContent.innerHTML = '';
+              posts.forEach(post => {
+                addMessageToDOM(post.message, post.author, post.date, post.time);
+              });
+              lastPostCount = posts.length;
+            }
           }
         } catch (error) {
           console.error('Error loading forum posts:', error);
           // Fallback to localStorage
           const posts = JSON.parse(localStorage.getItem('forumPosts') || '[]');
-          forumContent.innerHTML = '';
-          posts.forEach(post => {
-            addMessageToDOM(post.message, post.author, post.date, post.time);
-          });
+          if (posts.length !== lastPostCount) {
+            forumContent.innerHTML = '';
+            posts.forEach(post => {
+              addMessageToDOM(post.message, post.author, post.date, post.time);
+            });
+            lastPostCount = posts.length;
+          }
         }
       }
 
@@ -170,6 +180,16 @@
         const author = nameInput.value.trim() || 'Anonymous';
         
         if (message) {
+          // Add message immediately for instant feedback
+          const now = new Date();
+          const date = now.toLocaleDateString([], {month: '2-digit', day: '2-digit', year: '2-digit'});
+          const time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          
+          addMessageToDOM(message, author, date, time);
+          messageInput.value = '';
+          lastPostCount++; // Update counter
+          
+          // Then save to server in background
           try {
             const response = await fetch('http://localhost:3001/api/forum', {
               method: 'POST',
@@ -179,33 +199,25 @@
               body: JSON.stringify({ message, author })
             });
             
-            if (response.ok) {
-              const newPost = await response.json();
-              addMessageToDOM(newPost.message, newPost.author, newPost.date, newPost.time);
-              messageInput.value = '';
-            } else {
+            if (!response.ok) {
               throw new Error('Failed to save to server');
             }
           } catch (error) {
             console.error('Error saving to server:', error);
             // Fallback to localStorage
-            const now = new Date();
-            const date = now.toLocaleDateString([], {month: '2-digit', day: '2-digit', year: '2-digit'});
-            const time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
             const posts = JSON.parse(localStorage.getItem('forumPosts') || '[]');
             const newPost = { message, author, date, time, timestamp: now.toISOString() };
             posts.push(newPost);
             localStorage.setItem('forumPosts', JSON.stringify(posts));
-            
-            addMessageToDOM(message, author, date, time);
-            messageInput.value = '';
           }
         }
       }
 
       // Load posts on page load
       loadForumPosts();
+
+      // Poll for new messages every 2 seconds
+      setInterval(loadForumPosts, 2000);
 
       sendBtn.addEventListener('click', sendMessage);
       
