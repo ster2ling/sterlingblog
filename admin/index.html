@@ -524,14 +524,17 @@
         
         async function loadDevLogPosts() {
             const container = document.getElementById('devLogList');
+            console.log('Loading dev log posts...');
             
             try {
                 const response = await fetch('http://localhost:3001/api/devlog');
+                console.log('Response status:', response.status);
                 if (!response.ok) {
                     throw new Error('Server not available');
                 }
                 
                 const posts = await response.json();
+                console.log('Dev log posts loaded:', posts);
                 
                 if (posts.length === 0) {
                     container.innerHTML = '<p>No dev log posts yet.</p>';

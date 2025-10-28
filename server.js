@@ -98,6 +98,28 @@ async function deleteDevLogPost(id) {
   return true;
 }
 
+// Forum functions
+async function getForumPosts() {
+  const { data, error } = await supabase
+    .from('forum_posts')
+    .select('*')
+    .order('timestamp', { ascending: false });
+  
+  if (error) throw error;
+  return data || [];
+}
+
+async function addForumPost(post) {
+  const { data, error } = await supabase
+    .from('forum_posts')
+    .insert(post)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
 // Admin Settings functions
 async function getAdminSettings() {
   const { data, error } = await supabase
@@ -281,6 +303,42 @@ app.post('/api/admin/settings', async (req, res) => {
     } catch (error) {
         console.error('Error updating admin settings:', error);
         res.status(500).json({ error: 'Failed to update admin settings', details: error.message });
+    }
+});
+
+// Forum API
+app.get('/api/forum', async (req, res) => {
+    try {
+        const posts = await getForumPosts();
+        res.json(posts);
+    } catch (error) {
+        console.error('Error getting forum posts:', error);
+        res.status(500).json({ error: 'Failed to read forum posts' });
+    }
+});
+
+app.post('/api/forum', async (req, res) => {
+    try {
+        const { message, author } = req.body;
+        
+        if (!message) {
+            return res.status(400).json({ error: 'Message content is required' });
+        }
+        
+        const now = new Date();
+        const newPost = {
+            message: message,
+            author: author || 'Anonymous',
+            timestamp: now.toISOString(),
+            date: now.toLocaleDateString(),
+            time: now.toLocaleTimeString()
+        };
+        
+        const post = await addForumPost(newPost);
+        res.json(post);
+    } catch (error) {
+        console.error('Error adding forum post:', error);
+        res.status(500).json({ error: 'Failed to add forum post' });
     }
 });
 

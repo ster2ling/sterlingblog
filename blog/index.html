@@ -120,14 +120,38 @@
       const sendBtn = document.getElementById('forum-send-btn');
       const forumContent = document.getElementById('forum-content');
 
-      function addMessage(message, author = 'Anonymous') {
+      // Load existing forum posts
+      async function loadForumPosts() {
+        try {
+          const response = await fetch('http://localhost:3001/api/forum');
+          if (response.ok) {
+            const posts = await response.json();
+            forumContent.innerHTML = '';
+            posts.forEach(post => {
+              addMessageToDOM(post.message, post.author, post.date, post.time);
+            });
+          }
+        } catch (error) {
+          console.error('Error loading forum posts:', error);
+          // Fallback to localStorage
+          const posts = JSON.parse(localStorage.getItem('forumPosts') || '[]');
+          forumContent.innerHTML = '';
+          posts.forEach(post => {
+            addMessageToDOM(post.message, post.author, post.date, post.time);
+          });
+        }
+      }
+
+      function addMessageToDOM(message, author = 'Anonymous', date = null, time = null) {
         const postDiv = document.createElement('div');
         postDiv.className = 'forum-post';
         
-        const now = new Date();
-        const dateString = now.toLocaleDateString([], {month: '2-digit', day: '2-digit', year: '2-digit'});
-        const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const fullTimestamp = `${dateString} ${timeString}`;
+        if (!date || !time) {
+          const now = new Date();
+          date = now.toLocaleDateString([], {month: '2-digit', day: '2-digit', year: '2-digit'});
+          time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+        const fullTimestamp = `${date} ${time}`;
         
         postDiv.innerHTML = `
           <div class="post-header">
@@ -141,16 +165,47 @@
         forumContent.scrollTop = forumContent.scrollHeight;
       }
 
-      function sendMessage() {
+      async function sendMessage() {
         const message = messageInput.value.trim();
         const author = nameInput.value.trim() || 'Anonymous';
         
         if (message) {
-          addMessage(message, author);
-          messageInput.value = '';
-          // Keep the name for convenience
+          try {
+            const response = await fetch('http://localhost:3001/api/forum', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ message, author })
+            });
+            
+            if (response.ok) {
+              const newPost = await response.json();
+              addMessageToDOM(newPost.message, newPost.author, newPost.date, newPost.time);
+              messageInput.value = '';
+            } else {
+              throw new Error('Failed to save to server');
+            }
+          } catch (error) {
+            console.error('Error saving to server:', error);
+            // Fallback to localStorage
+            const now = new Date();
+            const date = now.toLocaleDateString([], {month: '2-digit', day: '2-digit', year: '2-digit'});
+            const time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            const posts = JSON.parse(localStorage.getItem('forumPosts') || '[]');
+            const newPost = { message, author, date, time, timestamp: now.toISOString() };
+            posts.push(newPost);
+            localStorage.setItem('forumPosts', JSON.stringify(posts));
+            
+            addMessageToDOM(message, author, date, time);
+            messageInput.value = '';
+          }
         }
       }
+
+      // Load posts on page load
+      loadForumPosts();
 
       sendBtn.addEventListener('click', sendMessage);
       

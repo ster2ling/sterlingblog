@@ -41,11 +41,23 @@ CREATE TABLE admin_settings (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Forum Posts Table
+CREATE TABLE forum_posts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    message TEXT NOT NULL,
+    author TEXT NOT NULL DEFAULT 'Anonymous',
+    timestamp TEXT NOT NULL,
+    date TEXT NOT NULL,
+    time TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE site_stats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE suggestions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dev_log_posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE forum_posts ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for public read access
 CREATE POLICY "Allow public read access to site_stats" ON site_stats
@@ -60,11 +72,17 @@ CREATE POLICY "Allow public read access to dev_log_posts" ON dev_log_posts
 CREATE POLICY "Allow public read access to admin_settings" ON admin_settings
     FOR SELECT USING (true);
 
+CREATE POLICY "Allow public read access to forum_posts" ON forum_posts
+    FOR SELECT USING (true);
+
 -- Create policies for public insert/update access
 CREATE POLICY "Allow public insert to suggestions" ON suggestions
     FOR INSERT WITH CHECK (true);
 
 CREATE POLICY "Allow public insert to dev_log_posts" ON dev_log_posts
+    FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Allow public insert to forum_posts" ON forum_posts
     FOR INSERT WITH CHECK (true);
 
 CREATE POLICY "Allow public update to site_stats" ON site_stats
