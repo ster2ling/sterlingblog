@@ -1,0 +1,161 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+        <title>Sterling's Blog</title>
+        <link rel="icon" type="image/x-icon" href="../favicon.ico"> 
+        <link rel="stylesheet" href="../2.0 stylejourn.css">
+    </head>
+    <body>
+    
+      <div id="container">
+
+        <div class="navbar-window">
+          <div id="navbar">
+            <a href="../index.html" class="nav-button">
+              <img src="../images/home window icon.png" alt="Home">
+              <span>Home</span>
+            </a>
+            <a href="../about/index.html" class="nav-button">
+              <img src="../images/about window icon.png" alt="About">
+              <span>About</span>
+            </a>
+            <a href="index.html" class="nav-button">
+              <img src="../images/writing window icon.png" alt="Blog">
+              <span>Blog</span>
+            </a>
+            <a href="../quotebook/index.html" class="nav-button">
+              <img src="../images/stag city window icon 2.png" alt="Quotebook">
+              <span>Quotebook</span>
+            </a>
+            <a href="../other/index.html" class="nav-button">
+              <img src="../images/other window icon.png" alt="Other">
+              <span>Other</span>
+            </a>
+            <a href="../basement/index.html" class="nav-button"> 
+              <img src="../images/basement window icon.png" alt="Basement">
+              <span>Basement</span>
+            </a>
+          </div>
+        </div>
+    
+<div id="sidebar">
+    <div class="side" id="deco">
+        <div class="table" id="date-list">
+        <details open style="font-size: larger;">
+            <summary style="font-weight: bold; color: blue;">2025</summary>
+            <!-- Dates will be populated dynamically -->
+        </details>
+    </div>
+    </div>
+    <div style="height: 550px;" id="deco"></div>
+</div>
+        
+
+        <div id="journ">
+            <div class="areaJournal">
+                <div class="subjectJournal" id="blog-content">
+                    <!-- Blog posts will be populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <div id="forum-section">
+            <div class="window">
+                <div class="title-bar">
+                    <div class="title-bar-text">Forum</div>
+                    <div class="title-bar-controls">
+                        <button aria-label="Minimize"></button>
+                        <button aria-label="Maximize"></button>
+                        <button aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="window-body">
+                    <div class="forum-content" id="forum-content">
+                        <div class="forum-post">
+                            <div class="post-header">
+                                <span class="post-author">Anonymous</span>
+                                <span class="post-time">Just now</span>
+                            </div>
+                            <div class="post-message">Welcome to the forum! Feel free to discuss anything here.</div>
+                        </div>
+                    </div>
+                    <div class="forum-input">
+                        <div class="field-row">
+                            <input type="text" placeholder="Your name..." id="forum-name-input" style="width: 120px;">
+                            <input type="text" placeholder="Your message..." id="forum-message-input">
+                            <button type="button" id="forum-send-btn">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+
+        
+<footer id="footer">
+    <div class="window">
+      <div class="window-body">
+          <div class="status-bar">
+            <p class="status-bar-field"><a href="../sitemap.html">sitemap</a></p>
+            <p class="status-bar-field">This website is brought to you by: boredom.</p>
+            <p class="status-bar-field">Since Oct 27th, 2025</p>
+          </div>
+      </div>
+    </div>
+  </footer>
+      
+              
+  </div>
+
+  <script>
+    // Forum functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const nameInput = document.getElementById('forum-name-input');
+      const messageInput = document.getElementById('forum-message-input');
+      const sendBtn = document.getElementById('forum-send-btn');
+      const forumContent = document.getElementById('forum-content');
+
+      function addMessage(message, author = 'Anonymous') {
+        const postDiv = document.createElement('div');
+        postDiv.className = 'forum-post';
+        
+        const now = new Date();
+        const dateString = now.toLocaleDateString([], {month: '2-digit', day: '2-digit', year: '2-digit'});
+        const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const fullTimestamp = `${dateString} ${timeString}`;
+        
+        postDiv.innerHTML = `
+          <div class="post-header">
+            <span class="post-author">${author}</span>
+            <span class="post-time">${fullTimestamp}</span>
+          </div>
+          <div class="post-message">${message}</div>
+        `;
+        
+        forumContent.appendChild(postDiv);
+        forumContent.scrollTop = forumContent.scrollHeight;
+      }
+
+      function sendMessage() {
+        const message = messageInput.value.trim();
+        const author = nameInput.value.trim() || 'Anonymous';
+        
+        if (message) {
+          addMessage(message, author);
+          messageInput.value = '';
+          // Keep the name for convenience
+        }
+      }
+
+      sendBtn.addEventListener('click', sendMessage);
+      
+      messageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          sendMessage();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

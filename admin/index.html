@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Stag City</title>
+    <title>Admin Panel</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <link rel="icon" type="image/x-icon" href="../favicon.ico">
     <link rel="apple-touch-icon" href="../favicon.svg">
@@ -46,19 +46,9 @@
             height: 100px;
             resize: vertical;
         }
-        .btn {
-            background-color: #c0c0c0;
-            border: 2px outset #c0c0c0;
-            padding: 8px 16px;
-            cursor: pointer;
-            font-family: 'Pixel Operator', monospace;
-            margin-right: 10px;
-        }
-        .btn:hover {
-            background-color: #d0d0d0;
-        }
-        .btn:active {
-            border-style: inset;
+        a.btn {
+            display: inline-block;
+            text-decoration: none;
         }
         .btn-danger {
             background-color: #ffcccc;
@@ -125,109 +115,29 @@
 </head>
 <body>
     <div class="admin-container">
-        <!-- Password Protection -->
-        <div id="passwordSection" class="admin-section">
-            <h3>Admin Access</h3>
-            <div class="form-group">
-                <label>Enter Password:</label>
-                <input type="password" id="adminPassword" placeholder="Enter admin password...">
-            </div>
-            <button class="btn" onclick="checkPassword()">Access Admin Panel</button>
-        </div>
         
         <!-- Admin Panel Content (Hidden Initially) -->
         <div id="adminContent" style="display: none;">
-        <h1 style="text-align: center; color: #000080; text-decoration: underline;">Admin Panel - Stag City</h1>
-        <div style="text-align: right; margin-bottom: 20px;">
-            <a href="/" class="btn" style="background-color: #4CAF50; color: white; text-decoration: none; margin-right: 10px;">Back to Home</a>
-            <button class="btn" onclick="logout()" style="background-color: #ff6b6b; color: white;">Logout</button>
+        <h1 style="text-align: center; color: #000080; text-decoration: underline;">Admin Panel</h1>
+        
+        <!-- Quick Actions Bar -->
+        <div style="background: #c0c0c0; border: 2px outset #c0c0c0; padding: 15px; margin-bottom: 20px; text-align: center;">
+            <h3 style="margin: 0 0 15px 0; color: #000080;">Quick Actions</h3>
+            <a href="blog-writer.html" class="btn">Blog Writer</a>
+            <a href="/" class="btn">Home</a>
+            <a href="#" class="btn" onclick="logout(); return false;">Logout</a>
         </div>
         
-        <!-- Quotes Management -->
+        <!-- Content Management -->
         <div class="admin-section">
-            <h3>Quote Management</h3>
-            <div class="form-group">
-                <label>Add New Quote:</label>
-                <textarea id="newQuote" placeholder="Enter quote text..."></textarea>
-            </div>
-            <div class="form-group">
-                <label>Author:</label>
-                <input type="text" id="newAuthor" placeholder="Enter author name...">
-            </div>
-            <button class="btn" onclick="addQuote()">Add Quote</button>
+            <h3>Content Management</h3>
             
-            <h4>Existing Quotes:</h4>
-            <div id="quotesList"></div>
-        </div>
-
-        <!-- Home Thread Management -->
-        <div class="admin-section">
-            <h3>Home Thread Management</h3>
-            <div class="form-group">
-                <label>Current Home Thread:</label>
-                <textarea id="homeThread" placeholder="Enter home thread content..."></textarea>
-            </div>
-            <button class="btn" onclick="updateHomeThread()">Update Home Thread</button>
-        </div>
-
-        <!-- Site Stats Management -->
-        <div class="admin-section">
-            <h3>Site Stats Management</h3>
-            
-            <div class="form-group">
-                <label>Reset Visitor Count:</label>
-                <input type="number" id="visitorCount" placeholder="Enter new visitor count">
-                <button class="btn" onclick="resetVisitorCount()">Reset Count</button>
-            </div>
-            
-            <div class="form-group">
-                <label>Current Stats (Auto-calculated):</label>
-                <div style="background-color: #f0f0f0; padding: 10px; border: 1px solid #ccc; font-family: monospace;">
-                    <div>Dev Log Posts: <span id="admin-devlog-count">0</span></div>
-                    <div>Suggestions: <span id="admin-suggestion-count">0</span></div>
-                    <div>Quotes: <span id="admin-quote-count">5</span></div>
-                    <div>Last Updated: <span id="admin-last-updated">Never</span></div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Activity Management -->
-        <div class="admin-section">
-            <h3>Activity Management</h3>
-            
-            <div class="form-group">
-                <label>Currently Reading:</label>
-                <input type="text" id="readingStatus" placeholder="What are you reading?">
-            </div>
-            
-            <div class="form-group">
-                <label>Currently Watching:</label>
-                <input type="text" id="watchingStatus" placeholder="What are you watching?">
-            </div>
-            
-            <div class="form-group">
-                <label>Currently Listening:</label>
-                <input type="text" id="listeningStatus" placeholder="What are you listening to?">
-            </div>
-            
-            <div class="form-group">
-                <label>Currently Playing:</label>
-                <input type="text" id="playingStatus" placeholder="What are you playing?">
-            </div>
-            
-            <button class="btn" onclick="updateActivity()">Update Activity</button>
-        </div>
-        
-        <!-- Dev Log Management -->
-        <div class="admin-section">
-            <h3>Dev Log Management</h3>
-            
+            <!-- Dev Log Management -->
             <div class="form-group">
                 <label>Add New Dev Log Post:</label>
                 <textarea id="newDevLogPost" placeholder="Enter your dev log post content..."></textarea>
             </div>
-            
-            <button class="btn" onclick="addDevLogPost()">Add Post</button>
+            <button class="btn" onclick="addDevLogPost()">Add Dev Log Post</button>
             
             <div class="form-group">
                 <label>Current Dev Log Posts:</label>
@@ -236,106 +146,114 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Mood Management -->
+
+        <!-- Site Settings -->
         <div class="admin-section">
-            <h3>Mood Management</h3>
+            <h3>Site Settings</h3>
             
+            <!-- Home Thread Management -->
+            <div class="form-group">
+                <label>Home Thread Content:</label>
+                <textarea id="homeThread" placeholder="Enter home thread content..."></textarea>
+            </div>
+            <button class="btn" onclick="updateHomeThread()">Update Home Thread</button>
+            
+            <!-- Mood Management -->
             <div class="form-group">
                 <label>Current Mood Description:</label>
                 <textarea id="moodDescription" placeholder="Enter your current mood description...">i want to see my girlfriend</textarea>
             </div>
-            
             <button class="btn" onclick="updateMood()">Update Mood</button>
         </div>
+
+        <!-- Activity Management -->
+        <div class="admin-section">
+            <h3>Activity Management</h3>
+            
+            <div style="background: #f0f0f0; border: 1px solid #ccc; padding: 10px;">
+                <h4 style="margin: 0 0 10px 0; color: #000080;">Current Activity</h4>
+                <div class="form-group">
+                    <label>Reading:</label>
+                    <input type="text" id="readingStatus" placeholder="What are you reading?" style="width: 200px;">
+                </div>
+                <div class="form-group">
+                    <label>Watching:</label>
+                    <input type="text" id="watchingStatus" placeholder="What are you watching?" style="width: 200px;">
+                </div>
+                <div class="form-group">
+                    <label>Listening:</label>
+                    <input type="text" id="listeningStatus" placeholder="What are you listening to?" style="width: 200px;">
+                </div>
+                <div class="form-group">
+                    <label>Playing:</label>
+                    <input type="text" id="playingStatus" placeholder="What are you playing?" style="width: 200px;">
+                </div>
+                <button class="btn" onclick="updateActivity()">Update Activity</button>
+            </div>
+        </div>
         
-        <!-- Image Management -->
+        <!-- Media & Data -->
         <div class="admin-section">
-            <h3>Image Management</h3>
+            <h3>Media & Data</h3>
             
-            <!-- Upload from Computer -->
-            <div class="form-group">
-                <label>Upload from Computer:</label>
-                <input type="file" id="computerUpload" accept="image/*" onchange="handleComputerUpload()">
+            <!-- Image Management -->
+            <div style="background: #f0f0f0; border: 1px solid #ccc; padding: 10px; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 10px 0; color: #000080;">Profile Image</h4>
+                <div class="form-group">
+                    <label>Upload from Computer:</label>
+                    <input type="file" id="computerUpload" accept="image/*" onchange="handleComputerUpload()">
+                </div>
+                <div class="form-group">
+                    <label>Or enter image path manually:</label>
+                    <input type="text" id="imagePath" placeholder="images/avatar.JPG" style="width: 200px;">
+                </div>
+                <div class="form-group">
+                    <label>Image Alt Text:</label>
+                    <input type="text" id="imageAlt" placeholder="Image description" style="width: 200px;">
+                </div>
+                <button class="btn" onclick="updateImage()">Update Image</button>
+                <div class="form-group">
+                    <label>Preview:</label>
+                    <img id="imagePreview" src="" style="max-width: 100px; max-height: 100px; border: 1px solid #ccc; display: none;">
+                </div>
             </div>
             
-            <!-- Upload from Phone -->
-            <div class="form-group">
-                <label>Upload from Phone:</label>
-                <input type="file" id="phoneUpload" accept="image/*" capture="camera" onchange="handlePhoneUpload()">
+            <!-- Suggestions Management -->
+            <div style="background: #f0f0f0; border: 1px solid #ccc; padding: 10px; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 10px 0; color: #000080;">User Suggestions</h4>
+                <div id="suggestionsList"></div>
+                <button class="btn btn-danger" onclick="clearAllSuggestions()">Clear All Suggestions</button>
             </div>
             
-            <!-- Manual Path -->
-            <div class="form-group">
-                <label>Or enter image path manually:</label>
-                <input type="text" id="imagePath" placeholder="images/avatar.JPG">
+            <!-- Data Management -->
+            <div style="background: #f0f0f0; border: 1px solid #ccc; padding: 10px;">
+                <h4 style="margin: 0 0 10px 0; color: #000080;">Data Backup</h4>
+                <button class="btn" onclick="exportData()">Export All Data</button>
+                <button class="btn" onclick="importData()">Import Data</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImport()">
             </div>
-            
-            <div class="form-group">
-                <label>Image Alt Text:</label>
-                <input type="text" id="imageAlt" placeholder="Image description">
-            </div>
-            
-            <button class="btn" onclick="updateImage()">Update Image</button>
-            
-            <!-- Preview -->
-            <div class="form-group">
-                <label>Preview:</label>
-                <img id="imagePreview" src="" style="max-width: 200px; max-height: 200px; border: 1px solid #ccc; display: none;">
-            </div>
-        </div>
-
-        <!-- Suggestions Management -->
-        <div class="admin-section">
-            <h3>Suggestions Management</h3>
-            <div id="suggestionsList"></div>
-            <button class="btn btn-danger" onclick="clearAllSuggestions()">Clear All Suggestions</button>
-        </div>
-
-        <!-- Export/Import -->
-        <div class="admin-section">
-            <h3>Data Management</h3>
-            <button class="btn" onclick="exportData()">Export All Data</button>
-            <button class="btn" onclick="importData()">Import Data</button>
-            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImport()">
         </div>
     </div>
 
     <script>
         // Password protection
-        const ADMIN_PASSWORD = "Sterling123"; // Change this to your desired password
+        const ADMIN_PASSWORD = "admin123"; // Change this to your desired password
         
-        function checkPassword() {
-            const enteredPassword = document.getElementById('adminPassword').value;
-            
-            if (enteredPassword === ADMIN_PASSWORD) {
-                document.getElementById('passwordSection').style.display = 'none';
-                document.getElementById('adminContent').style.display = 'block';
-                loadAllData();
-                
-                // Always save session to localStorage for permanent login
-                localStorage.setItem('adminLoggedIn', 'true');
-            } else {
-                alert('Incorrect password!');
-                document.getElementById('adminPassword').value = '';
-            }
-        }
         
         // Check if already logged in
         function checkExistingSession() {
-            if (localStorage.getItem('adminLoggedIn') === 'true') {
-                document.getElementById('passwordSection').style.display = 'none';
+            if (localStorage.getItem('isAdmin') === 'true') {
                 document.getElementById('adminContent').style.display = 'block';
                 loadAllData();
+            } else {
+                document.body.innerHTML = '<div style="text-align: center; margin-top: 50px; font-family: Arial, sans-serif;"><h2>Unauthorized Access</h2><p>You are not authorized to view this page.</p><a href="/" style="color: #000080;">Return to Home</a></div>';
             }
         }
         
         // Logout function
         function logout() {
-            localStorage.removeItem('adminLoggedIn');
-            document.getElementById('passwordSection').style.display = 'block';
-            document.getElementById('adminContent').style.display = 'none';
-            document.getElementById('adminPassword').value = '';
+            localStorage.removeItem('isAdmin');
+            window.location.href = '/';
         }
         
         function loadAllData() {
@@ -543,7 +461,7 @@
             }
             
             try {
-                const response = await fetch('/api/devlog', {
+                const response = await fetch('http://localhost:3001/api/devlog', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -552,7 +470,7 @@
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Failed to add dev log post');
+                    throw new Error('Server not available');
                 }
                 
                 document.getElementById('newDevLogPost').value = '';
@@ -560,37 +478,60 @@
                 alert('Dev log post added!');
             } catch (error) {
                 console.error('Error adding dev log post:', error);
-                alert('Failed to add dev log post. Please try again.');
+                // Fallback to localStorage
+                const posts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
+                const newPost = {
+                    id: Date.now(),
+                    content: postContent,
+                    date: new Date().toLocaleDateString(),
+                    timestamp: new Date().toISOString()
+                };
+                posts.push(newPost);
+                localStorage.setItem('devLogPosts', JSON.stringify(posts));
+                
+                document.getElementById('newDevLogPost').value = '';
+                await loadDevLogPosts();
+                alert('Dev log post added to local storage!');
             }
         }
         
         async function deleteDevLogPost(id) {
             try {
-                const response = await fetch(`/api/devlog/${id}`, {
+                const response = await fetch(`http://localhost:3001/api/devlog/${id}`, {
                     method: 'DELETE'
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Failed to delete dev log post');
+                    throw new Error('Server not available');
                 }
                 
                 await loadDevLogPosts();
                 alert('Dev log post deleted!');
             } catch (error) {
                 console.error('Error deleting dev log post:', error);
-                alert('Failed to delete dev log post. Please try again.');
+                // Fallback to localStorage
+                const posts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
+                const filteredPosts = posts.filter((post, index) => {
+                    // Handle both server IDs and localStorage indices
+                    return typeof id === 'number' ? index !== id : post.id !== id;
+                });
+                localStorage.setItem('devLogPosts', JSON.stringify(filteredPosts));
+                
+                await loadDevLogPosts();
+                alert('Dev log post deleted from local storage!');
             }
         }
         
         async function loadDevLogPosts() {
+            const container = document.getElementById('devLogList');
+            
             try {
-                const response = await fetch('/api/devlog');
+                const response = await fetch('http://localhost:3001/api/devlog');
                 if (!response.ok) {
-                    throw new Error('Failed to fetch dev log posts');
+                    throw new Error('Server not available');
                 }
                 
                 const posts = await response.json();
-                const container = document.getElementById('devLogList');
                 
                 if (posts.length === 0) {
                     container.innerHTML = '<p>No dev log posts yet.</p>';
@@ -601,17 +542,28 @@
                     <div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; background-color: white;">
                         <div style="font-weight: bold; color: #000080;">${post.date}</div>
                         <div style="margin: 5px 0;">${post.content}</div>
-                        <button class="btn btn-danger" onclick="deleteDevLogPost(${post.id})" style="font-size: 12px; padding: 4px 8px;">Delete</button>
+                        <button class="btn" onclick="deleteDevLogPost(${post.id})" style="font-size: 12px; padding: 4px 8px;">Delete</button>
                     </div>
                 `).join('');
             } catch (error) {
                 console.error('Error loading dev log posts:', error);
                 // Fallback to localStorage
-                const posts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
-                const container = document.getElementById('devLogList');
+                let posts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
+                
+                // If localStorage is empty, try to load from data file
+                if (posts.length === 0) {
+                    try {
+                        const dataResponse = await fetch('/data/devLogPosts.json');
+                        if (dataResponse.ok) {
+                            posts = await dataResponse.json();
+                        }
+                    } catch (dataError) {
+                        console.log('Could not load from data file either');
+                    }
+                }
                 
                 if (posts.length === 0) {
-                    container.innerHTML = '<p>No dev log posts yet.</p>';
+                    container.innerHTML = '<p>No dev log posts yet. <em>(Server not available)</em></p>';
                     return;
                 }
                 
@@ -619,7 +571,7 @@
                     <div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; background-color: white;">
                         <div style="font-weight: bold; color: #000080;">${post.date}</div>
                         <div style="margin: 5px 0;">${post.content}</div>
-                        <button class="btn btn-danger" onclick="deleteDevLogPost(${index})" style="font-size: 12px; padding: 4px 8px;">Delete</button>
+                        <button class="btn" onclick="deleteDevLogPost(${index})" style="font-size: 12px; padding: 4px 8px;">Delete</button>
                     </div>
                 `).join('');
             }
@@ -706,13 +658,10 @@
 
         // Suggestions Management
         async function deleteSuggestion(id) {
-            console.log('Attempting to delete suggestion with ID:', id);
             try {
                 const response = await fetch(`/api/suggestions/${id}`, {
                     method: 'DELETE'
                 });
-                
-                console.log('Delete response status:', response.status);
                 
                 if (!response.ok) {
                     throw new Error('Failed to delete suggestion');
@@ -810,7 +759,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'stag-city-data.json';
+            a.download = 'sterlingsitedata.json';
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -842,6 +791,13 @@
             };
             reader.readAsText(file);
         }
+        
+        // Check authorization on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkExistingSession();
+        });
     </script>
 </body>
 </html>
+
+

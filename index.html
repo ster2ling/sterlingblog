@@ -31,10 +31,6 @@
               <img src="images/about window icon.png" alt="About">
               <span>About</span>
             </a>
-            <a href="#" class="nav-button">
-              <img src="images/art window icon.png" alt="">
-              <span></span>
-            </a>
             <a href="/blog" class="nav-button">
               <img src="images/writing window icon.png" alt="Blog">
               <span>Blog</span>
@@ -219,10 +215,35 @@
                 </ul>
               </ul>
             </div>
-            <img src="images/devlog laptop.gif" id="deco" style="margin-left: 17%;">
+            <img src="images/devlog laptop.gif" id="dev-laptop" style="margin-left: 17%; cursor: pointer !important;">
                     </div>
                 </div>
                 
+        <div id="admin-login-section" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000;">
+            <div class="window">
+                <div class="title-bar">
+                    <div class="title-bar-text">Admin Login</div>
+                    <div class="title-bar-controls">
+                        <button aria-label="Minimize"></button>
+                        <button aria-label="Maximize"></button>
+                        <button aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="window-body">
+                    <div class="admin-login-content">
+                        <div class="field-row">
+                            <label for="admin-password">Password:</label>
+                            <input type="password" id="admin-password" placeholder="Enter admin password..." style="width: 200px;">
+                        </div>
+                        <div class="field-row">
+                            <button type="button" id="admin-login-btn">Login</button>
+                            <button type="button" id="admin-logout-btn" style="display: none;">Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <footer id="footer">
           <div class="window">
             <div class="window-body">
@@ -238,8 +259,6 @@
     </div>
     
     <script>
-        console.log('Script starting...');
-        
         const sections = document.querySelectorAll("section");
 
         [...sections].forEach((section) => {
@@ -378,22 +397,11 @@
             const uptimeHours = Math.floor(uptimeMs / (1000 * 60 * 60));
             const uptimeMinutes = Math.floor((uptimeMs % (1000 * 60 * 60)) / (1000 * 60));
             
-            console.log('Stats from server:', stats);
-            console.log('Uptime calculation:', {
-              currentTime: Date.now(),
-              deploymentTime: deploymentTime,
-              uptimeMs: uptimeMs,
-              uptimeHours: uptimeHours,
-              uptimeMinutes: uptimeMinutes
-            });
-            
-            
             // Update display with real stats
             document.getElementById('visitor-count').textContent = stats.visitorCount.toLocaleString();
             document.getElementById('time-since-update').textContent = timeSinceUpdate;
             document.getElementById('site-age').textContent = siteAgeDisplay;
             document.getElementById('uptime').textContent = `${uptimeHours}h ${uptimeMinutes}m`;
-            console.log('Updated uptime to:', `${uptimeHours}h ${uptimeMinutes}m`);
           } catch (error) {
             console.error('Error loading site stats:', error);
             // Fallback to localStorage if server is unavailable
@@ -667,9 +675,81 @@
           }
           
           // Load site stats
-          console.log('About to call loadSiteStats()');
           loadSiteStats();
-          console.log('loadSiteStats() called');
+
+          // Triple-click functionality for dev laptop
+          const devLaptop = document.getElementById('dev-laptop');
+          if (devLaptop) {
+            let clickCount = 0;
+            let clickTimer = null;
+
+            devLaptop.addEventListener('click', function(e) {
+              e.preventDefault();
+              clickCount++;
+              
+              if (clickCount === 1) {
+                clickTimer = setTimeout(() => {
+                  clickCount = 0;
+                }, 500);
+              } else if (clickCount === 3) {
+                clearTimeout(clickTimer);
+                clickCount = 0;
+                
+                const isAdmin = localStorage.getItem('isAdmin');
+                if (isAdmin === 'true') {
+                  window.location.href = '/admin';
+                } else {
+                  const adminSection = document.getElementById('admin-login-section');
+                  if (adminSection) {
+                    adminSection.style.display = 'block';
+                  }
+                }
+              }
+            });
+          }
+
+          // Admin authentication
+          const adminPassword = document.getElementById('admin-password');
+          const adminLoginBtn = document.getElementById('admin-login-btn');
+          const adminLogoutBtn = document.getElementById('admin-logout-btn');
+          const adminLoginSection = document.getElementById('admin-login-section');
+          
+          // Simple admin password (in real app, this would be server-side)
+          const ADMIN_PASSWORD = 'admin123';
+
+          function loginAdmin() {
+            const password = adminPassword.value.trim();
+            if (password === ADMIN_PASSWORD) {
+              localStorage.setItem('isAdmin', 'true');
+              adminPassword.value = '';
+              window.location.href = '/admin';
+            } else {
+              alert('Incorrect password!');
+            }
+          }
+
+          function logoutAdmin() {
+            localStorage.removeItem('isAdmin');
+            adminPassword.value = '';
+            adminLoginSection.style.display = 'none';
+          }
+
+          function closeAdminLogin() {
+            adminLoginSection.style.display = 'none';
+          }
+
+          adminLoginBtn.addEventListener('click', loginAdmin);
+          adminLogoutBtn.addEventListener('click', logoutAdmin);
+          
+          // Add close button functionality
+          const closeBtn = adminLoginSection.querySelector('button[aria-label="Close"]');
+          closeBtn.addEventListener('click', closeAdminLogin);
+          
+          adminPassword.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+              loginAdmin();
+            }
+          });
         });
     </script>
 </body>

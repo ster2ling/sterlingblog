@@ -168,21 +168,25 @@ you can add them directly to the <div id="header"></div> element! */
       );
       display: flex;
       justify-content: center;
-      gap: 25px;
+      gap: 15px;
       align-items: flex-end;
-      padding-bottom: 4.5px;
+      padding-bottom: 4px;
       width: 998.99px;
       height: 33px;
       margin: 0;
       box-sizing: border-box;
+      box-shadow: inset 0px 0px var(--window-frame),
+                  inset 0px 0px var(--button-highlight),
+                  var(--border-raised-inner);
   }
 
   .nav-button {
-      background-color: var(--button-face);
-      color: var(--text-color);
+      background-color: #b0b0b0;
+      color: #000000;
       text-decoration: none;
-      font-size: 14px;
-      font-family: 'Pixel Operator', sans-serif;
+      font-size: 11px;
+      font-family: 'ADDSBP', 'ADDSBP', sans-serif;
+      font-weight: normal;
       display: flex;
       align-items: center;
       padding: 0 4px;
@@ -191,120 +195,24 @@ you can add them directly to the <div id="header"></div> element! */
       box-shadow: var(--border-raised-outer), var(--border-raised-inner);
       height: 23px;
       box-sizing: border-box;
-      text-shadow: 1px 1px 0 var(--button-highlight);
+      text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
   }
-
-  .nav-button:nth-child(1) { 
-      width: 75px;
-      height: 23px;
-      padding-left: 12px;
-      padding-right: 12px;
-      border-right-width: 0px;
-      border-left-width: 0px;
-      margin-right: 0px;
-      margin-left: 0px;
-      border-top-width: 0px;
-      border-bottom-width: 0px;
-  } /* Home: 51px content + 24px padding */
-  
-  .nav-button:nth-child(2) { 
-      width: 78px;
-      height: 23px;
-      padding-left: 12px;
-      padding-right: 12px;
-      border-right-width: 0px;
-      border-left-width: 0px;
-      margin-right: 0px;
-      margin-left: 0px;
-      border-top-width: 0px;
-      border-bottom-width: 0px;
-  } /* About: 54px content + 24px padding */
-  
-  .nav-button:nth-child(3) { 
-      width: 75px;
-      height: 23px;
-      padding-left: 12px;
-      padding-right: 12px;
-      border-right-width: 0px;
-      border-left-width: 0px;
-      margin-right: 0px;
-      margin-left: 0px;
-      border-top-width: 0px;
-      border-bottom-width: 0px;
-  } /* Art: 51px content + 24px padding */
-  
-  .nav-button:nth-child(4) { 
-      width: 90px;
-      height: 23px;
-      padding-left: 12px;
-      padding-right: 12px;
-      border-right-width: 0px;
-      border-left-width: 0px;
-      margin-right: 0px;
-      margin-left: 0px;
-      border-top-width: 0px;
-      border-bottom-width: 0px;
-  } /* Writing: 66px content + 24px padding */
-  
-  .nav-button:nth-child(5) { 
-      width: 99px;
-      height: 23px;
-      padding-left: 12px;
-      padding-right: 12px;
-      border-right-width: 0px;
-      border-left-width: 0px;
-      margin-right: 0px;
-      margin-left: 0px;
-      border-top-width: 0px;
-      border-bottom-width: 0px;
-  } /* Quotebook: 75px content + 24px padding */
-  
-  .nav-button:nth-child(6) { 
-      width: 78px;
-      height: 23px;
-      padding-left: 12px;
-      padding-right: 12px;
-      border-right-width: 0px;
-      border-left-width: 0px;
-      margin-right: 0px;
-      margin-left: 0px;
-      border-top-width: 0px;
-      border-bottom-width: 0px;
-  } /* Other: 54px content + 24px padding */
-  .nav-button:nth-child(7) { 
-      width: 101px;
-      height: 23px;
-      padding-left: 12px;
-      padding-right: 12px;
-      border-right-width: 0px;
-      border-left-width: 0px;
-      margin-right: 0px;
-      margin-left: 0px;
-      border-top-width: 0px;
-      border-bottom-width: 0px;
-  } /* Basement */
 
   .nav-button:hover {
-      background-color: var(--button-face);
+      background-color: #a0a0a0;
       cursor: url('graphics/cursorselect.png'), pointer;
-  }
-
-  .nav-button:active {
-      box-shadow: var(--border-sunken-outer), var(--border-sunken-inner);
-      text-shadow: 1px 1px 0 var(--text-color);
   }
 
   .nav-button img {
       width: 16px;
       height: 16px;
-      margin-right: 6px;
-      flex-shrink: 0;
+      margin-right: 4px;
   }
 
   .nav-button span {
-      font-weight: normal;
       white-space: nowrap;
   }
+
 
   #flex {
       display: flex;
@@ -1751,4 +1659,85 @@ image-rendering: pixelated;
 .review {
 padding: 10px;
 width: 100%;
+}
+
+/* Dev laptop clickable styling */
+#dev-laptop {
+  cursor: url('graphics/cursorselect.png'), pointer !important;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Admin login panel styling */
+#admin-login-section .window {
+  width: 300px;
+}
+
+#admin-login-section .field-row {
+  margin: 10px 0;
+}
+
+#admin-login-section input[type="password"] {
+  width: 200px;
+  padding: 4px;
+  border: 2px inset #c0c0c0;
+  background: white;
+  font-family: "Pixel Operator", sans-serif;
+  font-size: 12px;
+}
+
+#admin-login-section .title-bar-controls button {
+  background-color: #c0c0c0;
+  border: 1px solid #808080;
+  width: 16px;
+  height: 14px;
+  margin: 0 1px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: url('graphics/cursorselect.png'), pointer;
+  position: relative;
+}
+
+#admin-login-section .title-bar-controls button:active {
+  border: 1px solid #ffffff;
+  background-color: #808080;
+}
+
+#admin-login-section .title-bar-controls button[aria-label="Minimize"]::after {
+  content: "−";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: bold;
+  color: #000;
+  line-height: 1;
+}
+
+#admin-login-section .title-bar-controls button[aria-label="Maximize"]::after {
+  content: "□";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: bold;
+  color: #000;
+  line-height: 1;
+}
+
+#admin-login-section .title-bar-controls button[aria-label="Close"]::after {
+  content: "×";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: bold;
+  color: #000;
+  line-height: 1;
 }
