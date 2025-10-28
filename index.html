@@ -9,8 +9,8 @@
         <link rel="stylesheet" href="style.css">
 
     <script>
-      window.BUILD_TIME = 1761595031501;
-      window.VERCEL_BUILD_TIME = 1761595031501;
+      window.BUILD_TIME = 1761615228000;
+      window.VERCEL_BUILD_TIME = 1761615228000;
     </script>
 </head>
 <body>
@@ -392,7 +392,14 @@
             // Calculate uptime in hours (based on current deployment)
             // Use Vercel's deployment timestamp or fallback to build time
             const deploymentTime = window.VERCEL_BUILD_TIME || 
-                                 (window.BUILD_TIME ? parseInt(window.BUILD_TIME) : Date.now());
+                                 (window.BUILD_TIME ? parseInt(window.BUILD_TIME) : null);
+            
+            if (!deploymentTime) {
+                console.warn('No deployment time available, uptime will be 0');
+                document.getElementById('uptime').textContent = '0h 0m';
+                return;
+            }
+            
             const uptimeMs = Date.now() - deploymentTime;
             const uptimeHours = Math.floor(uptimeMs / (1000 * 60 * 60));
             const uptimeMinutes = Math.floor((uptimeMs % (1000 * 60 * 60)) / (1000 * 60));

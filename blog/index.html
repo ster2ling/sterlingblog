@@ -125,7 +125,7 @@
       // Load existing forum posts
       async function loadForumPosts() {
         try {
-          const response = await fetch('http://localhost:3001/api/forum');
+          const response = await fetch('/api/forum');
           if (response.ok) {
             const posts = await response.json();
             
@@ -191,7 +191,7 @@
           
           // Then save to server in background
           try {
-            const response = await fetch('http://localhost:3001/api/forum', {
+            const response = await fetch('/api/forum', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'

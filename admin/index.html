@@ -260,7 +260,10 @@
             loadQuotes();
             loadHomeThread();
             loadMood();
-            loadDevLogPosts();
+            // Add small delay to ensure DOM is fully ready
+            setTimeout(() => {
+                loadDevLogPosts();
+            }, 100);
             loadActivity();
             loadImage();
             loadSuggestions();
@@ -461,7 +464,7 @@
             }
             
             try {
-                const response = await fetch('http://localhost:3001/api/devlog', {
+                const response = await fetch('/api/devlog', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -497,7 +500,7 @@
         
         async function deleteDevLogPost(id) {
             try {
-                const response = await fetch(`http://localhost:3001/api/devlog/${id}`, {
+                const response = await fetch(`/api/devlog/${id}`, {
                     method: 'DELETE'
                 });
                 
@@ -525,9 +528,15 @@
         async function loadDevLogPosts() {
             const container = document.getElementById('devLogList');
             console.log('Loading dev log posts...');
+            console.log('Container element:', container);
+            
+            if (!container) {
+                console.error('devLogList container not found!');
+                return;
+            }
             
             try {
-                const response = await fetch('http://localhost:3001/api/devlog');
+                const response = await fetch('/api/devlog');
                 console.log('Response status:', response.status);
                 if (!response.ok) {
                     throw new Error('Server not available');
