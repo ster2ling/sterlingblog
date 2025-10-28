@@ -6,8 +6,12 @@
         <link rel="stylesheet" href="../2.0 stylejourn.css">
     </head>
     <body>
+      <div id="starfield-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -100;">
+        <canvas id="starfield" style="width: 100%; height: 100%;"></canvas>
+      </div>
+      <script src="../js/starfield.js"></script>
     
-      <div id="container">
+      <div id="container" style="position: relative; z-index: 1; background-color: transparent;">
 
         <div class="navbar-window">
           <div id="navbar">
