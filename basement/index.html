@@ -7,23 +7,105 @@
     <link rel="icon" type="image/x-icon" href="../favicon.ico">
     <link rel="apple-touch-icon" href="../favicon.svg"> 
     <link rel="stylesheet" href="../style.css">
+    <script>
+      window.BUILD_TIME = 1761615228000;
+      window.VERCEL_BUILD_TIME = 1761615228000;
+    </script>
     <style>
         body {
-            background: #008080;
+            background: transparent;
             font-family: 'Pixel Operator', monospace;
             margin: 0;
-            padding: 20px;
-            min-height: 100vh;
+            padding: 0;
+            height: 100vh;
+            overflow-x: hidden;
+            overflow-y: hidden;
         }
         
-        .basement-container {
+        /* Global Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px !important;
+            height: 8px !important;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent !important;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 128, 0.5) !important;
+            border-radius: 0 !important;
+            background-clip: content-box !important;
+            border: 2px solid transparent !important;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 128, 0.7) !important;
+        }
+        
+        ::-webkit-scrollbar-corner {
+            background: transparent !important;
+        }
+        
+        /* Firefox scrollbar */
+        * {
+            scrollbar-width: thin !important;
+            scrollbar-color: rgba(0, 0, 128, 0.5) transparent !important;
+        }
+        
+        /* Force scrollbar styling on specific elements */
+        .chat-messages::-webkit-scrollbar,
+        .users-list::-webkit-scrollbar,
+        .playlist::-webkit-scrollbar {
+            width: 8px !important;
+            height: 8px !important;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track,
+        .users-list::-webkit-scrollbar-track,
+        .playlist::-webkit-scrollbar-track {
+            background: transparent !important;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb,
+        .users-list::-webkit-scrollbar-thumb,
+        .playlist::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 128, 0.5) !important;
+            border-radius: 0 !important;
+        }
+        
+        .basement-layout {
             max-width: 1200px;
             margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            padding: 5px 75px 20px 20px;
+            display: flex;
+            flex-direction: column;
             gap: 20px;
-            grid-template-areas: 
-                "chatroom music-player";
+            height: calc(100vh - 40px);
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        
+        .top-row {
+            display: flex;
+            gap: 20px;
+            height: 400px;
+            position: relative;
+            left: -10px;
+        }
+        
+        .chatroom-section {
+            flex: 2;
+        }
+        
+        .users-section {
+            flex: 1;
+        }
+        
+        .music-section {
+            height: 400px;
+            position: relative;
+            left: -10px;
         }
         
         .window {
@@ -73,6 +155,10 @@
             padding: 10px;
             height: calc(100% - 30px);
             overflow: hidden;
+        }
+        
+        .music-player .window-content {
+            padding: 10px;
         }
         
         /* Chatroom Styles */
@@ -140,6 +226,52 @@
         }
         
         .message-author {
+            font-weight: bold;
+            color: #000080;
+        }
+        
+        /* Active Users List */
+        .active-users {
+            grid-area: users;
+        }
+        
+        .users-list {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px inset #c0c0c0;
+            background: white;
+            padding: 5px;
+            font-size: 12px;
+        }
+        
+        .user-item {
+            padding: 3px 5px;
+            margin-bottom: 2px;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .user-item.online {
+            background: #e8f5e8;
+            border-color: #4caf50;
+        }
+        
+        .user-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+        
+        .user-status.online {
+            background: #4caf50;
+        }
+        
+        .user-name {
             font-weight: bold;
             color: #000080;
         }
@@ -234,80 +366,263 @@
             font-size: 12px;
         }
         
+        /* Footer - use main site styling */
+        #footer {
+            position: relative;
+            left: -10px;
+        }
+        
+        #footer .window {
+            height: 40px !important;
+            min-height: 40px !important;
+            max-height: 40px !important;
+        }
+        
+        #footer .window-body {
+            display: flex;
+            align-items: center;
+            margin: 0;
+            padding: 8px;
+            height: 100%;
+            box-sizing: border-box;
+        }
+        
+        #footer .status-bar {
+            width: 100%;
+        }
+        
+        #footer .status-bar-field {
+            width: 33%;
+            display: inline-block;
+        }
+        
+        #footer .status-bar-field:first-child {
+            text-align: left;
+        }
+        
+        #footer .status-bar-field:nth-child(2) {
+            text-align: center;
+        }
+        
+        #footer .status-bar-field:last-child {
+            text-align: right;
+        }
+        .navbar-window {
+            width: 1004.990px;
+            height: 39px;
+            padding: 3px;
+            box-sizing: border-box;
+            margin: 0 auto;
+            background-color: #C0C0C0;
+            border: 2px outset #C0C0C0;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            top: -5px;
+            left: -10px;
+            margin-bottom: 5px;
+        }
+        
+        #navbar {
+            background: linear-gradient(90deg, var(--dialog-blue), var(--dialog-blue-light));
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            align-items: flex-end;
+            padding-bottom: 4px;
+            width: 998.99px;
+            height: 33px;
+            margin: 0;
+            box-sizing: border-box;
+            box-shadow: inset 0px 0px var(--window-frame), inset 0px 0px var(--button-highlight), var(--border-raised-inner);
+        }
+        
+        .nav-button {
+            background-color: #b0b0b0;
+            color: #000000;
+            text-decoration: none;
+            font-size: 11px;
+            font-family: 'ADDSBP', 'ADDSBP', sans-serif;
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            padding: 0 4px;
+            margin: 0 4px;
+            border: none;
+            box-shadow: var(--border-raised-outer), var(--border-raised-inner);
+            height: 23px;
+            box-sizing: border-box;
+            text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .nav-button:hover {
+            background-color: #a0a0a0;
+            cursor: url('../graphics/cursorselect.png'), pointer;
+        }
+        
+        .nav-button img {
+            width: 16px;
+            height: 16px;
+            margin-right: 4px;
+        }
         
         /* Responsive */
         @media (max-width: 768px) {
-            .basement-container {
-                grid-template-columns: 1fr;
+            #container.basement-container {
                 grid-template-areas: 
+                    "navbar"
                     "chatroom"
-                    "music-player";
+                    "users"
+                    "music-player"
+                    "footer";
+                grid-template-columns: 1fr;
+bruh                grid-template-rows: 50px 300px 150px 400px 25px;
+                padding: 10px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="basement-container">
-        <!-- Chatroom -->
-        <div class="window chatroom">
-            <div class="title-bar">
-                <span>💬 Basement Chatroom</span>
-                <div class="title-bar-controls">
-                    <button aria-label="Minimize">_</button>
-                    <button aria-label="Maximize">□</button>
-                    <button aria-label="Close">×</button>
-                </div>
-            </div>
-            <div class="window-content">
-                <div class="chat-messages" id="chat-messages">
-                    <div class="message">
-                        <span class="message-time">[System]</span> Welcome to the basement chatroom! 🎉
-                    </div>
-                </div>
-                <div class="chat-input-container">
-                    <input type="text" class="nickname-input" id="nickname-input" placeholder="Nickname" maxlength="20">
-                    <input type="text" class="chat-input" id="chat-input" placeholder="Type your message..." maxlength="200">
-                    <button class="chat-send-btn" id="chat-send-btn">Send</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Music Player -->
-        <div class="window music-player">
-            <div class="title-bar">
-                <span>🎵 Music Player</span>
-                <div class="title-bar-controls">
-                    <button aria-label="Minimize">_</button>
-                    <button aria-label="Maximize">□</button>
-                    <button aria-label="Close">×</button>
-                </div>
-            </div>
-            <div class="window-content">
-                <div class="music-controls">
-                    <button class="music-btn" id="prev-btn">⏮</button>
-                    <button class="music-btn" id="play-pause-btn">▶</button>
-                    <button class="music-btn" id="next-btn">⏭</button>
-                    <div class="progress-container" id="progress-container">
-                        <div class="progress-bar" id="progress-bar"></div>
-                    </div>
-                    <div class="volume-container">
-                        <span>🔊</span>
-                        <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="50">
-                    </div>
-                </div>
-                <div class="playlist" id="playlist">
-                    <div class="playlist-item" data-src="">
-                        <strong>No music loaded</strong><br>
-                        <small>Upload some MP3 files to get started!</small>
-                    </div>
-                </div>
-                <div class="file-upload">
-                    <input type="file" id="music-upload" accept="audio/*" multiple>
-                    <button class="music-btn" id="upload-btn">Upload Music</button>
-                </div>
-            </div>
-        </div>
+    <div id="starfield-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -100;">
+        <canvas id="starfield" style="width: 100%; height: 100%;"></canvas>
     </div>
+    <script src="../js/starfield.js"></script>
+    
+    <div id="container" style="position: relative; z-index: 1; background-color: transparent;">
+        
+        <!-- Main Content -->
+        <div class="basement-layout">
+            <!-- Navbar -->
+            <div class="navbar-window">
+                <div id="navbar">
+                    <a href="/" class="nav-button">
+                        <img src="../images/home window icon.png" alt="Home">
+                        <span>Home</span>
+                    </a>
+                    <a href="/about" class="nav-button">
+                        <img src="../images/about window icon.png" alt="About">
+                        <span>About</span>
+                    </a>
+                    <a href="/blog" class="nav-button">
+                        <img src="../images/writing window icon.png" alt="Blog">
+                        <span>Blog</span>
+                    </a>
+                    <a href="/quotebook" class="nav-button">
+                        <img src="../images/stag city window icon 2.png" alt="Quotebook">
+                        <span>Quotebook</span>
+                    </a>
+                    <a href="/other" class="nav-button">
+                        <img src="../images/other window icon.png" alt="Other">
+                        <span>Other</span>
+                    </a>
+                    <a href="/basement" class="nav-button"> 
+                        <img src="../images/basement window icon.png" alt="Basement">
+                        <span>Basement</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Top Row: Chatroom and Users -->
+            <div class="top-row">
+                <!-- Chatroom -->
+                <div class="chatroom-section">
+                    <div class="window chatroom">
+                        <div class="title-bar">
+                            <span>💬 Basement Chatroom</span>
+                            <div class="title-bar-controls">
+                                <button aria-label="Minimize">_</button>
+                                <button aria-label="Maximize">□</button>
+                                <button aria-label="Close">×</button>
+                            </div>
+                        </div>
+                        <div class="window-content">
+                            <div class="chat-messages" id="chat-messages">
+                                <div class="message">
+                                    <span class="message-time">[System]</span> Welcome to the basement chatroom! 🎉
+                                </div>
+                            </div>
+                            <div class="chat-input-container">
+                                <input type="text" class="nickname-input" id="nickname-input" placeholder="Nickname" maxlength="20">
+                                <input type="text" class="chat-input" id="chat-input" placeholder="Type your message..." maxlength="200">
+                                <button class="chat-send-btn" id="chat-send-btn">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Active Users List -->
+                <div class="users-section">
+                    <div class="window active-users">
+                        <div class="title-bar">
+                            <span>👥 Online</span>
+                            <div class="title-bar-controls">
+                                <button aria-label="Minimize">_</button>
+                                <button aria-label="Maximize">□</button>
+                                <button aria-label="Close">×</button>
+                            </div>
+                        </div>
+                        <div class="window-content">
+                            <div class="users-list" id="users-list">
+                                <div class="user-item online">
+                                    <div class="user-status online"></div>
+                                    <span class="user-name">System</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Music Player -->
+            <div class="music-section">
+                <div class="window music-player">
+                    <div class="title-bar">
+                        <span>🎵 Music Player</span>
+                        <div class="title-bar-controls">
+                            <button aria-label="Minimize">_</button>
+                            <button aria-label="Maximize">□</button>
+                            <button aria-label="Close">×</button>
+                        </div>
+                    </div>
+                    <div class="window-content">
+                        <div class="music-controls">
+                            <button class="music-btn" id="prev-btn">⏮</button>
+                            <button class="music-btn" id="play-pause-btn">▶</button>
+                            <button class="music-btn" id="next-btn">⏭</button>
+                            <div class="progress-container" id="progress-container">
+                                <div class="progress-bar" id="progress-bar"></div>
+                            </div>
+                            <div class="volume-container">
+                                <span>🔊</span>
+                                <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="50">
+                            </div>
+                        </div>
+                        <div class="playlist" id="playlist">
+                            <div class="playlist-item" data-src="">
+                                <strong>No music loaded</strong><br>
+                                <small>Upload some MP3 files to get started!</small>
+                            </div>
+                        </div>
+                        <div class="file-upload">
+                            <input type="file" id="music-upload" accept="audio/*" multiple style="display: none;">
+                            <button class="music-btn" id="upload-btn">Upload Music</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <footer id="footer">
+              <div class="window">
+                <div class="window-body">
+                  <div class="status-bar">
+                    <p class="status-bar-field"><a href="/sitemap">sitemap</a></p>
+                    <p class="status-bar-field">This website is brought to you out of boredom.</p>
+                    <p class="status-bar-field">Since Oct 27th, 2025</p>
+                  </div>
+                </div>
+              </div>
+            </footer>
+        </div>
 
     <!-- Hidden audio element for music player -->
     <audio id="audio-player" preload="metadata"></audio>

@@ -155,13 +155,16 @@
             <div class="form-group">
                 <label>Home Thread Content:</label>
                 <textarea id="homeThread" placeholder="Enter home thread content..."></textarea>
+                <div style="margin-top: 5px; font-size: 12px; color: #666;">
+                    <strong>Link Help:</strong> Use [text](url) to create links. Example: [Google](https://google.com)
+                </div>
             </div>
             <button class="btn" onclick="updateHomeThread()">Update Home Thread</button>
             
             <!-- Mood Management -->
             <div class="form-group">
                 <label>Current Mood Description:</label>
-                <textarea id="moodDescription" placeholder="Enter your current mood description...">i want to see my girlfriend</textarea>
+                <textarea id="moodDescription" placeholder="Enter your current mood description..."></textarea>
             </div>
             <button class="btn" onclick="updateMood()">Update Mood</button>
         </div>
@@ -189,6 +192,31 @@
                     <input type="text" id="playingStatus" placeholder="What are you playing?" style="width: 200px;">
                 </div>
                 <button class="btn" onclick="updateActivity()">Update Activity</button>
+            </div>
+        </div>
+        
+        <!-- Quote Management -->
+        <div class="admin-section">
+            <h3>Quote Management</h3>
+            
+            <div style="background: #f0f0f0; border: 1px solid #ccc; padding: 10px; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 10px 0; color: #000080;">Add New Quote</h4>
+                <div class="form-group">
+                    <label>Quote:</label>
+                    <textarea id="newQuote" placeholder="Enter the quote..." style="width: 100%; height: 60px;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Author:</label>
+                    <input type="text" id="newAuthor" placeholder="Enter the author..." style="width: 200px;">
+                </div>
+                <button class="btn" onclick="addQuote()">Add Quote</button>
+            </div>
+            
+            <div style="background: #f0f0f0; border: 1px solid #ccc; padding: 10px;">
+                <h4 style="margin: 0 0 10px 0; color: #000080;">Existing Quotes</h4>
+                <div id="quotesList">
+                    <p>Loading quotes...</p>
+                </div>
             </div>
         </div>
         
@@ -623,6 +651,9 @@
                 const settings = await response.json();
                 if (settings.mood_description) {
                     document.getElementById('moodDescription').value = settings.mood_description;
+                } else {
+                    // Set default if no mood is saved
+                    document.getElementById('moodDescription').value = 'i want to see my girlfriend';
                 }
             } catch (error) {
                 console.error('Error loading mood:', error);
@@ -630,6 +661,9 @@
                 const moodDescription = localStorage.getItem('adminMoodDescription');
                 if (moodDescription) {
                     document.getElementById('moodDescription').value = moodDescription;
+                } else {
+                    // Set default if no mood is saved
+                    document.getElementById('moodDescription').value = 'i want to see my girlfriend';
                 }
             }
         }
@@ -637,13 +671,21 @@
         // Home Thread Management
         function updateHomeThread() {
             const content = document.getElementById('homeThread').value.trim();
-            localStorage.setItem('adminHomeThread', content);
+            
+            // Convert markdown-style links to HTML
+            const processedContent = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+            
+            localStorage.setItem('adminHomeThread', processedContent);
             alert('Home thread updated!');
         }
 
         function loadHomeThread() {
             const content = localStorage.getItem('adminHomeThread') || "Hi! My name is Sterling. I made this site because I've been super bored and finally got the domain i wanted to get my hands on, figured id get some use out of it.";
-            document.getElementById('homeThread').value = content;
+            
+            // Convert HTML links back to markdown format for editing
+            const editableContent = content.replace(/<a href="([^"]+)" target="_blank">([^<]+)<\/a>/g, '[$2]($1)');
+            
+            document.getElementById('homeThread').value = editableContent;
         }
 
         // Image Management

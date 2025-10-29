@@ -198,7 +198,7 @@
                     dateAdded: "2024-01-01"
                 }
             ];
-            return adminQuotes.length > 0 ? adminQuotes : defaultQuotes;
+            return [...defaultQuotes, ...adminQuotes];
         }
 
         function loadQuoteBook() {

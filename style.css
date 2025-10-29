@@ -11,11 +11,37 @@
       --body-bg-image: url('pixelforest.png');
       font-family: Pixel Operator;
       src: url('PixelOperator.ttf');
-      scrollbar-width: none;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 0, 128, 0.5) transparent;
       -ms-overflow-style: none;
       /* colors */
       
      
+  }
+  
+  /* Global Scrollbar Styling */
+  ::-webkit-scrollbar {
+      width: 8px !important;
+      height: 8px !important;
+  }
+  
+  ::-webkit-scrollbar-track {
+      background: transparent !important;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 128, 0.5) !important;
+      border-radius: 0 !important;
+      background-clip: content-box !important;
+      border: 2px solid transparent !important;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 128, 0.7) !important;
+  }
+  
+  ::-webkit-scrollbar-corner {
+      background: transparent !important;
   }
   
  
@@ -55,15 +81,11 @@ and then link it! Many fonts have separate files for each style
       color: #fceaff;
       background-image: var(--body-bg-image);
       cursor: url('graphics/cursornormal.png'), default; 
-      scrollbar-width: none;
       -ms-overflow-style: none;
   }
 
   * {
       box-sizing: border-box;
-      scrollbar-width:thin;
-      -ms-overflow-style:none;
-      scrollbar-color: #000080 #dfdfdf;
   }
 
 
@@ -91,31 +113,16 @@ and change the media query according to the comment! */
     max-width: 1100px;
     max-height: 1180px;
     grid-template-areas: 
-    "header header header"
     "navbar navbar navbar"
     "sidebar main activity"
     "sidebar main updates"
     "footer footer footer";
     grid-template-columns: 23% 52% 25%;
-    grid-template-rows: 150px 50px 390px 390px 50px;
+    grid-template-rows: 50px 390px 390px 50px;
     gap: 10px;
     padding: 20px 75px 20px 20px;
   }
  
-  #header {
-      grid-area: header;
-      background-color: transparent;
-      padding: 10px;
-      font-size: 30px;
-      font-family: 'ADDSBP', sans-serif;
-      color: #000080;
-      /* header color here! */
-      /* this is only for a background image! */
-      /* if you want to put images IN the header, 
-you can add them directly to the <div id="header"></div> element! */
-      background-image: var(--header-image);
-      background-size: 100%;
-  }
 
   .navbar-window {
       grid-area: navbar;
@@ -1355,49 +1362,6 @@ summary:focus {
 outline: 1px dotted #000000;
 }
 
-::-webkit-scrollbar {
-width: 16px;
-}
-::-webkit-scrollbar:horizontal {
-height: 17px;
-}
-
-::-webkit-scrollbar-corner {
-background: var(--button-face);
-}
-
-::-webkit-scrollbar-track {
-background-image: svg-load("icon/scrollbar-background.svg");
-}
-
-::-webkit-scrollbar-thumb {
-background-color: var(--button-face);
-box-shadow: var(--border-raised-outer), var(--border-raised-inner);
-}
-
-::-webkit-scrollbar-button:horizontal:start:decrement,
-::-webkit-scrollbar-button:horizontal:end:increment,
-::-webkit-scrollbar-button:vertical:start:decrement,
-::-webkit-scrollbar-button:vertical:end:increment {
-display: block;
-}
-
-::-webkit-scrollbar-button:vertical:start {
-height: 17px;
-background-image: svg-load("icon/button-up.svg");
-}
-::-webkit-scrollbar-button:vertical:end {
-height: 17px;
-background-image: svg-load("icon/button-down.svg");
-}
-::-webkit-scrollbar-button:horizontal:start {
-width: 16px;
-background-image: svg-load("icon/button-left.svg");
-}
-::-webkit-scrollbar-button:horizontal:end {
-width: 16px;
-background-image: svg-load("icon/button-right.svg");
-}
 
 .window[role=tabpanel] {
 position: relative;
@@ -1461,7 +1425,7 @@ border-image: svg-load("icon/sunken-panel-border.svg") 2;
 overflow: auto;
 background-color: #fff;
 width: 229.25px;
-height: 70px;
+height: 81px;
 margin: 0;
 padding: 0;
 }
