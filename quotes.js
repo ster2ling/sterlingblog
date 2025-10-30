@@ -82,10 +82,9 @@ const quotes = [
     }
 ];
 
-// Function to get quotes (admin quotes take priority)
+// Function to get wisdom quotes (always use the 20 pre-set quotes)
 function getQuotes() {
-    const adminQuotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
-    return adminQuotes.length > 0 ? adminQuotes : quotes;
+    return quotes;
 }
 
 // Function to display a random quote

@@ -330,14 +330,12 @@
                 const statsResponse = await fetch('/api/stats');
                 const devLogResponse = await fetch('/api/devlog');
                 const suggestionsResponse = await fetch('/api/suggestions');
+                const quotesResponse = await fetch('/api/quotes');
                 
                 const stats = statsResponse.ok ? await statsResponse.json() : {};
                 const devLogPosts = devLogResponse.ok ? await devLogResponse.json() : [];
                 const suggestions = suggestionsResponse.ok ? await suggestionsResponse.json() : [];
-                
-                const adminQuotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
-                const defaultQuotes = 5;
-                const totalQuotes = adminQuotes.length > 0 ? adminQuotes.length : defaultQuotes;
+                const quotes = quotesResponse.ok ? await quotesResponse.json() : [];
                 
                 let lastUpdated = 'Never';
                 if (devLogPosts.length > 0) {
@@ -347,7 +345,7 @@
                 
                 document.getElementById('admin-devlog-count').textContent = devLogPosts.length;
                 document.getElementById('admin-suggestion-count').textContent = suggestions.length;
-                document.getElementById('admin-quote-count').textContent = totalQuotes;
+                document.getElementById('admin-quote-count').textContent = quotes.length;
                 document.getElementById('admin-last-updated').textContent = lastUpdated;
             } catch (error) {
                 console.error('Error loading site stats:', error);
@@ -355,8 +353,6 @@
                 const devLogPosts = JSON.parse(localStorage.getItem('devLogPosts') || '[]');
                 const suggestions = JSON.parse(localStorage.getItem('suggestions') || '[]');
                 const adminQuotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
-                const defaultQuotes = 5;
-                const totalQuotes = adminQuotes.length > 0 ? adminQuotes.length : defaultQuotes;
                 
                 let lastUpdated = 'Never';
                 if (devLogPosts.length > 0) {
@@ -366,7 +362,7 @@
                 
                 document.getElementById('admin-devlog-count').textContent = devLogPosts.length;
                 document.getElementById('admin-suggestion-count').textContent = suggestions.length;
-                document.getElementById('admin-quote-count').textContent = totalQuotes;
+                document.getElementById('admin-quote-count').textContent = adminQuotes.length;
                 document.getElementById('admin-last-updated').textContent = lastUpdated;
             }
         }
@@ -399,7 +395,7 @@
         }
 
         // Quote Management
-        function addQuote() {
+        async function addQuote() {
             const quote = document.getElementById('newQuote').value.trim();
             const author = document.getElementById('newAuthor').value.trim();
             
@@ -408,44 +404,108 @@
                 return;
             }
             
-            let quotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
-            quotes.push({ 
-                quote, 
-                author, 
-                id: Date.now(),
-                dateAdded: new Date().toLocaleDateString()
-            });
-            localStorage.setItem('adminQuotes', JSON.stringify(quotes));
-            
-            document.getElementById('newQuote').value = '';
-            document.getElementById('newAuthor').value = '';
-            loadQuotes();
-        }
-
-        function deleteQuote(index) {
-            let quotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
-            quotes.splice(index, 1);
-            localStorage.setItem('adminQuotes', JSON.stringify(quotes));
-            loadQuotes();
-        }
-
-        function loadQuotes() {
-            const quotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
-            const container = document.getElementById('quotesList');
-            
-            if (quotes.length === 0) {
-                container.innerHTML = '<p>No quotes yet.</p>';
-                return;
+            try {
+                const response = await fetch('/api/quotes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ quote, author })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Server not available');
+                }
+                
+                document.getElementById('newQuote').value = '';
+                document.getElementById('newAuthor').value = '';
+                await loadQuotes();
+                alert('Quote added!');
+            } catch (error) {
+                console.error('Error adding quote:', error);
+                // Fallback to localStorage
+                let quotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
+                quotes.push({ 
+                    quote, 
+                    author, 
+                    id: Date.now(),
+                    date_added: new Date().toLocaleDateString()
+                });
+                localStorage.setItem('adminQuotes', JSON.stringify(quotes));
+                
+                document.getElementById('newQuote').value = '';
+                document.getElementById('newAuthor').value = '';
+                await loadQuotes();
+                alert('Quote added to local storage!');
             }
-            
-            container.innerHTML = quotes.map((q, index) => `
-                <div class="quote-item">
-                    <div class="quote-text">"${q.quote}"</div>
-                    <div class="quote-author">- ${q.author}</div>
-                    <div class="meta">Added: ${q.dateAdded || 'Unknown'}</div>
-                    <button class="btn btn-danger" onclick="deleteQuote(${index})">Delete</button>
-                </div>
-            `).join('');
+        }
+
+        async function deleteQuote(id) {
+            try {
+                const response = await fetch(`/api/quotes/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Server not available');
+                }
+                
+                await loadQuotes();
+                alert('Quote deleted!');
+            } catch (error) {
+                console.error('Error deleting quote:', error);
+                // Fallback to localStorage
+                let quotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
+                quotes.splice(id, 1);
+                localStorage.setItem('adminQuotes', JSON.stringify(quotes));
+                await loadQuotes();
+                alert('Quote deleted from local storage!');
+            }
+        }
+
+        async function loadQuotes() {
+            try {
+                const response = await fetch('/api/quotes');
+                if (!response.ok) {
+                    throw new Error('Server not available');
+                }
+                
+                const quotes = await response.json();
+                const container = document.getElementById('quotesList');
+                
+                if (quotes.length === 0) {
+                    container.innerHTML = '<p>No quotes yet.</p>';
+                    return;
+                }
+                
+                container.innerHTML = quotes.map((q) => `
+                    <div class="quote-item">
+                        <div class="quote-text">"${q.quote}"</div>
+                        <div class="quote-author">- ${q.author}</div>
+                        <div class="meta">Added: ${q.date_added || 'Unknown'}</div>
+                        <button class="btn btn-danger" onclick="deleteQuote('${q.id}')">Delete</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading quotes:', error);
+                // Fallback to localStorage
+                const quotes = JSON.parse(localStorage.getItem('adminQuotes') || '[]');
+                const container = document.getElementById('quotesList');
+                
+                if (quotes.length === 0) {
+                    container.innerHTML = '<p>No quotes yet. <em>(Server not available)</em></p>';
+                    return;
+                }
+                
+                container.innerHTML = quotes.map((q, index) => `
+                    <div class="quote-item">
+                        <div class="quote-text">"${q.quote}"</div>
+                        <div class="quote-author">- ${q.author}</div>
+                        <div class="meta">Added: ${q.date_added || 'Unknown'}</div>
+                        <button class="btn btn-danger" onclick="deleteQuote(${index})">Delete</button>
+                    </div>
+                `).join('');
+            }
         }
 
         // Image Upload Functions
@@ -652,8 +712,8 @@
                 if (settings.mood_description) {
                     document.getElementById('moodDescription').value = settings.mood_description;
                 } else {
-                    // Set default if no mood is saved
-                    document.getElementById('moodDescription').value = 'i want to see my girlfriend';
+                    // Leave empty if no mood is saved
+                    document.getElementById('moodDescription').value = '';
                 }
             } catch (error) {
                 console.error('Error loading mood:', error);
@@ -662,8 +722,8 @@
                 if (moodDescription) {
                     document.getElementById('moodDescription').value = moodDescription;
                 } else {
-                    // Set default if no mood is saved
-                    document.getElementById('moodDescription').value = 'i want to see my girlfriend';
+                    // Leave empty if no mood is saved
+                    document.getElementById('moodDescription').value = '';
                 }
             }
         }

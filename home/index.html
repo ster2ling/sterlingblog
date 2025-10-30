@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html>
 <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
@@ -190,7 +190,7 @@
                   <span style="font-weight: bold; text-decoration: underline;">Currently feeling:</span> 
                   <img src="https://moods.imood.com/display/uname-sterling/fg-000000/trans-1/imood.gif" alt="The current mood of sterling at www.imood.com" style="vertical-align: text-bottom; display: inline-block; margin-bottom: .7px;">
                 </div>
-                <div style="margin-left: 0px; font-size: 16px; max-height: 60px; overflow-y: auto; word-wrap: break-word;" id="mood-description">i want to see my girlfriend</div>
+                <div style="margin-left: 0px; font-size: 16px; max-height: 60px; overflow-y: auto; word-wrap: break-word;" id="mood-description">Loading mood...</div>
               </fieldset>
             </article>
             <fieldset id="wisdom-fieldset">
@@ -580,27 +580,33 @@
             const settings = await response.json();
             const moodElement = document.getElementById('mood-description');
             
-            if (moodElement && settings.mood_description) {
-              moodElement.textContent = settings.mood_description;
-              
-              // Adjust font size and scrolling based on content length
-              const maxLength = 50; // Characters before reducing font size
-              if (settings.mood_description.length > maxLength) {
-                moodElement.style.fontSize = '14px';
-                moodElement.style.maxHeight = '80px';
-              }
-              if (settings.mood_description.length > maxLength * 2) {
-                moodElement.style.fontSize = '12px';
-                moodElement.style.maxHeight = '100px';
+            if (moodElement) {
+              if (settings.mood_description && settings.mood_description.trim()) {
+                moodElement.textContent = settings.mood_description;
+                
+                // Adjust font size and scrolling based on content length
+                const maxLength = 50; // Characters before reducing font size
+                if (settings.mood_description.length > maxLength) {
+                  moodElement.style.fontSize = '14px';
+                  moodElement.style.maxHeight = '80px';
+                }
+                if (settings.mood_description.length > maxLength * 2) {
+                  moodElement.style.fontSize = '12px';
+                  moodElement.style.maxHeight = '100px';
+                }
+              } else {
+                moodElement.textContent = 'No mood set';
+                moodElement.style.fontStyle = 'italic';
+                moodElement.style.color = '#666';
               }
             }
           } catch (error) {
             console.error('Error loading mood from server:', error);
             // Fallback to localStorage
             const moodDescription = localStorage.getItem('adminMoodDescription');
-            if (moodDescription) {
-              const moodElement = document.getElementById('mood-description');
-              if (moodElement) {
+            const moodElement = document.getElementById('mood-description');
+            if (moodElement) {
+              if (moodDescription && moodDescription.trim()) {
                 moodElement.textContent = moodDescription;
                 
                 // Adjust font size and scrolling based on content length
@@ -613,6 +619,10 @@
                   moodElement.style.fontSize = '12px';
                   moodElement.style.maxHeight = '100px';
                 }
+              } else {
+                moodElement.textContent = 'No mood set';
+                moodElement.style.fontStyle = 'italic';
+                moodElement.style.color = '#666';
               }
             }
           }

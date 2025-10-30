@@ -4,6 +4,85 @@
         <title>Sterling's Blog</title>
         <link rel="icon" type="image/x-icon" href="../favicon.ico"> 
         <link rel="stylesheet" href="../2.0 stylejourn.css">
+    <style>
+        /* Override navbar to match home/basement style */
+        
+        #container {
+            grid-template-columns: 241px 513px 241px;
+            grid-template-rows: 50px 390px 390px 50px;
+            padding: 20px 20px 20px 20px;
+        }
+        
+        .navbar-window {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 1004.990px;
+            height: 39px;
+            padding: 3px;
+            box-sizing: border-box;
+            margin: 0 auto; /* center exactly like home/basement */
+            position: absolute; /* match home positioning */
+            top: 20px;
+            left: 532px; /* revert 1px right */
+            right: 548px;
+            transform: translateX(-50%);
+            background-color: #C0C0C0;
+        }
+
+        #navbar {
+            background: linear-gradient(
+                90deg,
+                var(--dialog-blue),
+                var(--dialog-blue-light)
+            );
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            align-items: flex-end;
+            padding-bottom: 4px;
+            width: 998.99px;
+            height: 33px;
+            margin: 0;
+            box-sizing: border-box;
+            box-shadow: inset 0px 0px var(--window-frame),
+                        inset 0px 0px var(--button-highlight),
+                        var(--border-raised-inner);
+        }
+        
+        .nav-button {
+            background-color: #b0b0b0;
+            color: #000000;
+            text-decoration: none;
+            font-size: 11px;
+            font-family: 'ADDSBP', 'ADDSBP', sans-serif;
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            padding: 0 4px;
+            margin: 0 4px;
+            border: none;
+            box-shadow: var(--border-raised-outer), var(--border-raised-inner);
+            height: 23px;
+            box-sizing: border-box;
+            text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-button:hover {
+            background-color: #a0a0a0;
+            cursor: url('graphics/cursorselect.png'), pointer;
+        }
+
+        .nav-button img {
+            width: 16px;
+            height: 16px;
+            margin-right: 4px;
+        }
+
+        .nav-button span {
+            white-space: nowrap;
+        }
+    </style>
     </head>
     <body>
       <div id="starfield-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -100;">
