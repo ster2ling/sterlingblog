@@ -694,6 +694,8 @@
                     throw new Error('Failed to update mood');
                 }
                 
+                // Persist locally so home can reflect immediately
+                localStorage.setItem('adminMoodDescription', moodDescription);
                 alert('Mood updated!');
             } catch (error) {
                 console.error('Error updating mood:', error);
@@ -780,6 +782,9 @@
                 const result = await response.json();
                 console.log('Server response:', result);
                 
+                // Save to localStorage for instant UI update on home
+                localStorage.setItem('adminImagePath', path);
+                localStorage.setItem('adminImageAlt', alt);
                 alert('Image updated!');
             } catch (error) {
                 console.error('Error updating image:', error);
