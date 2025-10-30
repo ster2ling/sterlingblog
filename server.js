@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const supabase = require('./supabase');
 
 const app = express();
@@ -9,7 +10,22 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.static('.')); // Serve static files
+// Simple SID generator
+function generateSid() {
+  return 'sid_' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+}
+
+// Ensure a sid cookie exists on each request
+app.use((req, res, next) => {
+  if (!req.cookies.sid) {
+    const sid = generateSid();
+    res.cookie('sid', sid, { httpOnly: true, sameSite: 'lax', path: '/' });
+    req.cookies.sid = sid;
+  }
+  next();
+});
 
 // Helper functions for Supabase operations
 async function getSiteStats() {
@@ -317,6 +333,68 @@ app.get('/api/forum', async (req, res) => {
     }
 });
 
+// Quotes helpers
+async function getQuotes() {
+  const { data, error } = await supabase
+    .from('quotes')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+async function addQuote(quote) {
+  const { data, error } = await supabase
+    .from('quotes')
+    .insert(quote)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function deleteQuote(id) {
+  const { error } = await supabase
+    .from('quotes')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+  return true;
+}
+
+// Quotes API
+app.get('/api/quotes', async (req, res) => {
+  try {
+    const quotes = await getQuotes();
+    res.json(quotes);
+  } catch (error) {
+    console.error('Error getting quotes:', error);
+    res.status(500).json({ error: 'Failed to read quotes' });
+  }
+});
+
+app.post('/api/quotes', async (req, res) => {
+  try {
+    const { quote, author, date_added } = req.body;
+    if (!quote || !author) return res.status(400).json({ error: 'quote and author are required' });
+    const saved = await addQuote({ quote, author, date_added: date_added || new Date().toLocaleDateString() });
+    res.json(saved);
+  } catch (error) {
+    console.error('Error adding quote:', error);
+    res.status(500).json({ error: 'Failed to add quote' });
+  }
+});
+
+app.delete('/api/quotes/:id', async (req, res) => {
+  try {
+    await deleteQuote(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting quote:', error);
+    res.status(500).json({ error: 'Failed to delete quote' });
+  }
+});
+
 app.post('/api/forum', async (req, res) => {
     try {
         const { message, author } = req.body;
@@ -340,6 +418,165 @@ app.post('/api/forum', async (req, res) => {
         console.error('Error adding forum post:', error);
         res.status(500).json({ error: 'Failed to add forum post' });
     }
+});
+
+// Basement: Chat, Users, Playlist
+async function getBasementChat(limit = 100) {
+  const { data, error } = await supabase
+    .from('basement_chat')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data || []).reverse();
+}
+
+async function addBasementMessage(msg) {
+  const { data, error } = await supabase
+    .from('basement_chat')
+    .insert(msg)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function upsertBasementUser(user) {
+  const { data, error } = await supabase
+    .from('basement_users')
+    .upsert(user, { onConflict: 'sid' })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function getBasementUsers() {
+  const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+  const { data, error } = await supabase
+    .from('basement_users')
+    .select('*')
+    .gte('last_seen', fiveMinutesAgo)
+    .order('last_seen', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+async function getBasementPlaylist() {
+  const { data, error } = await supabase
+    .from('basement_playlist')
+    .select('*')
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function addBasementTrack(track) {
+  const { data, error } = await supabase
+    .from('basement_playlist')
+    .insert(track)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// Basement API Routes
+app.get('/api/basement/chat', async (req, res) => {
+  try {
+    const since = parseInt(req.query.since || '0', 10);
+    let messages = await getBasementChat();
+    if (since) {
+      messages = messages.filter(m => (m.created_at_ms || 0) > since);
+    }
+    res.json(messages);
+  } catch (error) {
+    console.error('Error getting basement chat:', error);
+    res.status(500).json({ error: 'Failed to read chat' });
+  }
+});
+
+app.post('/api/basement/chat', async (req, res) => {
+  try {
+    const { message, timestamp } = req.body;
+    if (!message) return res.status(400).json({ error: 'Message is required' });
+    // Resolve author from sid to prevent impersonation
+    const sid = req.cookies.sid;
+    let authorName = 'Anonymous';
+    try {
+      const { data: u } = await supabase
+        .from('basement_users')
+        .select('name, sid')
+        .eq('sid', sid)
+        .single();
+      if (u && u.name) authorName = u.name;
+    } catch (_) {}
+    const msg = {
+      author: authorName,
+      message,
+      timestamp: timestamp || new Date().toLocaleTimeString(),
+      created_at_ms: Date.now()
+    };
+    const saved = await addBasementMessage(msg);
+    res.json(saved);
+  } catch (error) {
+    console.error('Error adding basement message:', error);
+    res.status(500).json({ error: 'Failed to add message' });
+  }
+});
+
+app.get('/api/basement/users', async (req, res) => {
+  try {
+    const users = await getBasementUsers();
+    res.json(users);
+  } catch (error) {
+    console.error('Error getting basement users:', error);
+    res.status(500).json({ error: 'Failed to read users' });
+  }
+});
+
+app.post('/api/basement/users', async (req, res) => {
+  try {
+    const { name, status } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name is required' });
+    const sid = req.cookies.sid;
+    // Check for name taken by other sid
+    const { data: existing } = await supabase
+      .from('basement_users')
+      .select('sid, name')
+      .eq('name', name)
+      .maybeSingle();
+    if (existing && existing.sid && existing.sid !== sid) {
+      return res.status(409).json({ error: 'Name is taken' });
+    }
+    const saved = await upsertBasementUser({ sid, name, status: status || 'online', last_seen: Date.now() });
+    res.json(saved);
+  } catch (error) {
+    console.error('Error upserting basement user:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+app.get('/api/basement/playlist', async (req, res) => {
+  try {
+    const tracks = await getBasementPlaylist();
+    res.json(tracks);
+  } catch (error) {
+    console.error('Error getting basement playlist:', error);
+    res.status(500).json({ error: 'Failed to read playlist' });
+  }
+});
+
+app.post('/api/basement/playlist', async (req, res) => {
+  try {
+    const { name, src, type } = req.body;
+    if (!name || !src) return res.status(400).json({ error: 'Track name and src are required' });
+    const track = await addBasementTrack({ name, src, type: type || 'audio/mpeg' });
+    res.json(track);
+  } catch (error) {
+    console.error('Error adding basement track:', error);
+    res.status(500).json({ error: 'Failed to add track' });
+  }
 });
 
 // Initialize server

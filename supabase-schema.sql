@@ -103,6 +103,76 @@ INSERT INTO site_stats (id, visitor_count, first_visit, last_updated)
 VALUES (1, 0, EXTRACT(EPOCH FROM NOW()) * 1000, EXTRACT(EPOCH FROM NOW()) * 1000)
 ON CONFLICT (id) DO NOTHING;
 
+-- =========================
+-- Basement + Quotes Support
+-- =========================
+
+-- Basement chat messages
+CREATE TABLE IF NOT EXISTS basement_chat (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    author TEXT NOT NULL DEFAULT 'Anonymous',
+    message TEXT NOT NULL,
+    timestamp TEXT NOT NULL,
+    created_at_ms BIGINT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Basement active users
+CREATE TABLE IF NOT EXISTS basement_users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT UNIQUE NOT NULL,
+    status TEXT NOT NULL DEFAULT 'online',
+    last_seen BIGINT NOT NULL,
+    sid TEXT UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Basement playlist (stores data URLs)
+CREATE TABLE IF NOT EXISTS basement_playlist (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    src TEXT NOT NULL,
+    type TEXT NOT NULL DEFAULT 'audio/mpeg',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Quotes table for added quotes in quotebook
+CREATE TABLE IF NOT EXISTS quotes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    quote TEXT NOT NULL,
+    author TEXT NOT NULL,
+    date_added TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE basement_chat ENABLE ROW LEVEL SECURITY;
+ALTER TABLE basement_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE basement_playlist ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quotes ENABLE ROW LEVEL SECURITY;
+
+-- Read policies
+CREATE POLICY IF NOT EXISTS "Allow public read access to basement_chat" ON basement_chat
+    FOR SELECT USING (true);
+CREATE POLICY IF NOT EXISTS "Allow public read access to basement_users" ON basement_users
+    FOR SELECT USING (true);
+CREATE POLICY IF NOT EXISTS "Allow public read access to basement_playlist" ON basement_playlist
+    FOR SELECT USING (true);
+CREATE POLICY IF NOT EXISTS "Allow public read access to quotes" ON quotes
+    FOR SELECT USING (true);
+
+-- Insert/update policies
+CREATE POLICY IF NOT EXISTS "Allow public insert to basement_chat" ON basement_chat
+    FOR INSERT WITH CHECK (true);
+CREATE POLICY IF NOT EXISTS "Allow public insert to basement_users" ON basement_users
+    FOR INSERT WITH CHECK (true);
+CREATE POLICY IF NOT EXISTS "Allow public insert to basement_playlist" ON basement_playlist
+    FOR INSERT WITH CHECK (true);
+CREATE POLICY IF NOT EXISTS "Allow public insert to quotes" ON quotes
+    FOR INSERT WITH CHECK (true);
+CREATE POLICY IF NOT EXISTS "Allow public update to basement_users" ON basement_users
+    FOR UPDATE USING (true);
+
 -- Insert initial admin settings
 INSERT INTO admin_settings (id, mood_description, home_thread, image_path, image_alt) 
 VALUES (1, 'i want to see my girlfriend', '', 'images/avatar.JPG', '')

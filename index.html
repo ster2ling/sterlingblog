@@ -271,6 +271,15 @@
     </script>
       
       <script>
+        // Helper to set Image of the Week quickly from any source
+        function setImageOfWeek(path, altText) {
+          const img = document.getElementById('image-of-week');
+          const caption = document.getElementById('image-of-week-caption');
+          if (img && path) img.src = path;
+          if (img && altText) img.alt = altText;
+          if (caption && altText) caption.textContent = altText;
+        }
+
         // Grass confetti effect
         function createGrassConfetti() {
             const colors = ['#2E8B57', '#3CB371', '#228B22', '#32CD32', '#90EE90', '#9ACD32', '#6B8E23', '#556B2F', '#8FBC8F'];
@@ -585,16 +594,8 @@
               const settings = await response.json();
               console.log('Image settings from server:', settings);
               if (settings.image_path) {
-                console.log('Updating images with path:', settings.image_path);
-                // Update all avatar images on the page
-                const avatarImages = document.querySelectorAll('img[src*="avatar"]');
-                console.log('Found avatar images:', avatarImages.length);
-                avatarImages.forEach(img => {
-                  img.src = settings.image_path;
-                  if (settings.image_alt) {
-                    img.alt = settings.image_alt;
-                  }
-                });
+                console.log('Updating image of the week with path:', settings.image_path);
+                setImageOfWeek(settings.image_path, settings.image_alt);
               }
             }
           } catch (error) {
@@ -603,15 +604,7 @@
             const imagePath = localStorage.getItem('adminImagePath');
             const imageAlt = localStorage.getItem('adminImageAlt');
             console.log('Falling back to localStorage:', imagePath);
-            if (imagePath) {
-              const avatarImages = document.querySelectorAll('img[src*="avatar"]');
-              avatarImages.forEach(img => {
-                img.src = imagePath;
-                if (imageAlt) {
-                  img.alt = imageAlt;
-                }
-              });
-            }
+            if (imagePath) setImageOfWeek(imagePath, imageAlt);
           }
         }
         
@@ -678,6 +671,11 @@
         document.addEventListener('DOMContentLoaded', function() {
           updateSuggestionHistory();
           
+          // Apply any locally saved image immediately to avoid avatar flash
+          const lsImg = localStorage.getItem('adminImagePath');
+          const lsAlt = localStorage.getItem('adminImageAlt');
+          if (lsImg) setImageOfWeek(lsImg, lsAlt);
+
           // Load admin home thread
           const homeThread = localStorage.getItem('adminHomeThread');
           if (homeThread) {

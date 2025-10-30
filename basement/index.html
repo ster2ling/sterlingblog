@@ -308,20 +308,13 @@
             border: 1px inset #c0c0c0;
         }
         
-        .progress-container {
+        /* Retro audio visualizer */
+        #audio-visualizer {
             flex: 1;
-            height: 20px;
+            height: 20px; /* match previous progress bar height */
             background: #c0c0c0;
             border: 1px inset #c0c0c0;
-            position: relative;
-            cursor: pointer;
-        }
-        
-        .progress-bar {
-            height: 100%;
-            background: #000080;
-            width: 0%;
-            transition: width 0.1s;
+            image-rendering: pixelated;
         }
         
         .volume-container {
@@ -355,6 +348,63 @@
         .playlist-item.active {
             background: #000080;
             color: white;
+        }
+
+        /* Ensure volume slider track/thumb render (override if theme misses) */
+        #range23 {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            height: 20px;
+        }
+        #range23::-webkit-slider-runnable-track {
+            height: 2px;
+            background: black;
+            border-right: 1px solid grey;
+            border-bottom: 1px solid grey;
+            box-shadow: 1px 0 0 white, 1px 1px 0 white, 0 1px 0 white, -1px 0 0 darkgrey,
+                         -1px -1px 0 darkgrey, 0 -1px 0 darkgrey, -1px 1px 0 white, 1px -1px darkgrey;
+        }
+        #range23::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px; height: 22px;
+            /* Win98-style rectangular thumb */
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='22'>\
+              <rect x='3' y='3' width='6' height='16' fill='%23dfdfdf' stroke='%23808080'/>\
+              <path d='M3 3 L9 3 L9 19 L3 19 Z' fill='none' stroke='%23ffffff' stroke-width='1' opacity='0.6'/>\
+            </svg>");
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: contain;
+            /* Fallback if asset not found */
+            background-color: #dfdfdf;
+            box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, 1px 1px 0 #808080, -1px -1px 0 #808080;
+            border: 1px solid #808080;
+            transform: translateY(-11px); /* center the thumb over 2px track */
+            cursor: pointer;
+        }
+        #range23::-moz-range-track {
+            height: 2px;
+            background: black;
+            border-right: 1px solid grey;
+            border-bottom: 1px solid grey;
+            box-shadow: 1px 0 0 white, 1px 1px 0 white, 0 1px 0 white, -1px 0 0 darkgrey,
+                         -1px -1px 0 darkgrey, 0 -1px 0 darkgrey, -1px 1px 0 white, 1px -1px darkgrey;
+        }
+        #range23::-moz-range-thumb {
+            width: 12px; height: 22px;
+            border: 1px solid #808080;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='22'>\
+              <rect x='3' y='3' width='6' height='16' fill='%23dfdfdf' stroke='%23808080'/>\
+              <path d='M3 3 L9 3 L9 19 L3 19 Z' fill='none' stroke='%23ffffff' stroke-width='1' opacity='0.6'/>\
+            </svg>");
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: contain;
+            /* Fallback */
+            background-color: #dfdfdf;
+            box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, 1px 1px 0 #808080, -1px -1px 0 #808080;
+            cursor: pointer;
         }
         
         .file-upload {
@@ -486,6 +536,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
         <canvas id="starfield" style="width: 100%; height: 100%;"></canvas>
     </div>
     <script src="../js/starfield.js"></script>
+    <script src="../js/global-player.js"></script>
     
     <div id="container" style="position: relative; z-index: 1; background-color: transparent;">
         
@@ -588,12 +639,22 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                             <button class="music-btn" id="prev-btn">⏮</button>
                             <button class="music-btn" id="play-pause-btn">▶</button>
                             <button class="music-btn" id="next-btn">⏭</button>
-                            <div class="progress-container" id="progress-container">
-                                <div class="progress-bar" id="progress-bar"></div>
-                            </div>
+                            <canvas id="audio-visualizer"></canvas>
                             <div class="volume-container">
-                                <span>🔊</span>
-                                <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="50">
+                                <div class="field-row" style="width: 300px">
+                                  <label for="range23">Volume:</label>
+                                  <label for="range23">Low</label>
+                                  <input id="range23" class="volume-slider" type="range" min="1" max="11" value="5" style="width: 120px;" list="vol-ticks" />
+                                  <label for="range23">High</label>
+                                  <datalist id="vol-ticks">
+                                    <option value="1"></option>
+                                    <option value="3"></option>
+                                    <option value="5"></option>
+                                    <option value="7"></option>
+                                    <option value="9"></option>
+                                    <option value="11"></option>
+                                  </datalist>
+                                </div>
                             </div>
                         </div>
                         <div class="playlist" id="playlist">
@@ -730,8 +791,8 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             const playPauseBtn = document.getElementById('play-pause-btn');
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
-            const progressContainer = document.getElementById('progress-container');
-            const volumeSlider = document.getElementById('volume-slider');
+            const visualizerCanvas = document.getElementById('audio-visualizer');
+            const volumeSlider = document.getElementById('range23');
             const uploadBtn = document.getElementById('upload-btn');
             const musicUpload = document.getElementById('music-upload');
             
@@ -751,17 +812,22 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             musicUpload.addEventListener('change', handleMusicUpload);
             
             // Progress bar
-            progressContainer.addEventListener('click', seekToPosition);
+            // Visualizer handled via RAF, no click seeking
             
             // Audio events
-            audio.addEventListener('timeupdate', updateProgress);
             audio.addEventListener('ended', nextTrack);
             audio.addEventListener('loadedmetadata', () => {
-                updateProgress();
+                // resize canvas to container width
+                visualizerCanvas.width = visualizerCanvas.clientWidth;
+                visualizerCanvas.height = visualizerCanvas.clientHeight;
             });
             
             // Set initial volume
-            audio.volume = volumeSlider.value / 100;
+            // Convert 1..11 to 0..1
+            audio.volume = (volumeSlider.value - 1) / 10;
+
+            // Init visualizer
+            setupVisualizer(visualizerCanvas);
         }
         
         function togglePlayPause() {
@@ -773,6 +839,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                 audio.pause();
                 playPauseBtn.textContent = '▶';
                 isPlaying = false;
+                syncGlobalPlayer();
             } else {
                 if (audio.src !== playlist[currentTrack].src) {
                     audio.src = playlist[currentTrack].src;
@@ -780,6 +847,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                 audio.play();
                 playPauseBtn.textContent = '⏸';
                 isPlaying = true;
+                syncGlobalPlayer();
             }
         }
         
@@ -788,6 +856,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             
             currentTrack = (currentTrack - 1 + playlist.length) % playlist.length;
             loadTrack();
+            syncGlobalPlayer();
         }
         
         function nextTrack() {
@@ -795,6 +864,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             
             currentTrack = (currentTrack + 1) % playlist.length;
             loadTrack();
+            syncGlobalPlayer();
         }
         
         function loadTrack() {
@@ -806,27 +876,111 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             if (isPlaying) {
                 audio.play();
             }
+            syncGlobalPlayer();
         }
         
-        function updateProgress() {
-            if (audio.duration) {
-                const progress = (audio.currentTime / audio.duration) * 100;
-                document.getElementById('progress-bar').style.width = progress + '%';
+        // Web Audio API visualizer
+        let audioCtx, analyser, dataArray;
+        function setupVisualizer(canvas) {
+            try {
+                audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioCtx.createMediaElementSource(audio);
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 256;
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+                source.connect(analyser);
+                analyser.connect(audioCtx.destination);
+                drawVisualizer(canvas.getContext('2d'), canvas, bufferLength);
+            } catch (e) {
+                console.warn('Audio visualizer unavailable:', e);
             }
+        }
+
+        function drawVisualizer(ctx, canvas, bufferLength) {
+            function draw() {
+                requestAnimationFrame(draw);
+                if (!analyser) return;
+                analyser.getByteFrequencyData(dataArray);
+                ctx.fillStyle = '#c0c0c0';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                const barCount = 48; // retro bars
+                const step = Math.floor(bufferLength / barCount);
+                const barWidth = Math.max(2, Math.floor(canvas.width / (barCount * 1.5)));
+                let x = 2;
+                for (let i = 0; i < barCount; i++) {
+                    const v = dataArray[i * step] || 0;
+                    const h = Math.floor((v / 255) * (canvas.height - 2));
+                    // Retro colors: blue shades
+                    ctx.fillStyle = '#000080';
+                    ctx.fillRect(x, canvas.height - h - 1, barWidth, h);
+                    // Pixelated outline feel
+                    ctx.strokeStyle = '#808080';
+                    ctx.strokeRect(x, canvas.height - h - 1, barWidth, h);
+                    x += barWidth + 2;
+                }
+            }
+            draw();
         }
         
-        function seekToPosition(e) {
-            if (audio.duration) {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                const percentage = clickX / rect.width;
-                audio.currentTime = percentage * audio.duration;
-            }
-        }
+        // Remove seeking since visualizer replaced progress bar
         
         function updateVolume() {
-            audio.volume = this.value / 100;
+            // 1..11 -> 0..1 mapping
+            audio.volume = (this.value - 1) / 10;
+            syncGlobalPlayer();
         }
+
+        // Persist/continue playback across pages via localStorage
+        function syncGlobalPlayer() {
+            const state = {
+                src: playlist[currentTrack] ? playlist[currentTrack].src : audio.src || '',
+                isPlaying,
+                currentTime: audio.currentTime || 0,
+                volume: audio.volume || 1,
+                index: currentTrack,
+            };
+            try {
+                localStorage.setItem('globalAudioState', JSON.stringify(state));
+            } catch (_) {}
+        }
+
+        // Keep global state updated periodically while playing
+        audio.addEventListener('timeupdate', function () {
+            if (isPlaying) syncGlobalPlayer();
+        });
+
+        // Active users ping + list refresh
+        function startPresence() {
+            const nicknameInput = document.getElementById('nickname-input');
+            function ping() {
+                const name = (nicknameInput.value || 'Anonymous').slice(0, 20);
+                fetch('/api/basement/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, status: 'online' })
+                }).catch(() => {});
+            }
+            function refreshList() {
+                fetch('/api/basement/users')
+                  .then(r => r.ok ? r.json() : [])
+                  .then(users => {
+                      const list = document.getElementById('users-list');
+                      if (!list) return;
+                      list.innerHTML = users.map(u => `
+                        <div class="user-item online">
+                          <div class="user-status online"></div>
+                          <span class="user-name">${u.name}</span>
+                        </div>`).join('');
+                  }).catch(() => {});
+            }
+            ping();
+            refreshList();
+            setInterval(ping, 20000);
+            setInterval(refreshList, 10000);
+        }
+
+        document.addEventListener('DOMContentLoaded', startPresence);
         
         function handleMusicUpload(e) {
             const files = Array.from(e.target.files);

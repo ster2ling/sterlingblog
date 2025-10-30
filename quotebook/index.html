@@ -347,6 +347,19 @@
         <canvas id="starfield" style="width: 100%; height: 100%;"></canvas>
     </div>
     <script src="../js/starfield.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Optional runtime config: set window.SUPABASE_URL and window.SUPABASE_ANON_KEY in Vercel
+        // or save them once in localStorage under the same names.
+        (function initSupabaseClient(){
+            const url = window.SUPABASE_URL || localStorage.getItem('SUPABASE_URL');
+            const anon = window.SUPABASE_ANON_KEY || localStorage.getItem('SUPABASE_ANON_KEY');
+            if (url && anon && window.supabase) {
+                window.sb = window.supabase.createClient(url, anon);
+            }
+        })();
+    </script>
+    <script src="../js/global-player.js"></script>
 
     <div id="container" style="position: relative; z-index: 1; background-color: transparent;">
 
@@ -442,11 +455,23 @@
 
         // Function to get added quotes from server
         async function getAddedQuotes() {
+            // Prefer direct Supabase if configured
+            if (window.sb) {
+                try {
+                    const { data, error } = await window.sb
+                        .from('quotes')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+                    if (error) throw error;
+                    return data || [];
+                } catch (e) {
+                    console.warn('Supabase unavailable, falling back to API:', e);
+                }
+            }
+            // Try legacy API
             try {
                 const response = await fetch('/api/quotes');
-                if (!response.ok) {
-                    throw new Error('Server not available');
-                }
+                if (!response.ok) throw new Error('Server not available');
                 return await response.json();
             } catch (error) {
                 console.error('Error fetching added quotes:', error);
@@ -552,7 +577,7 @@
             
             container.innerHTML = quotes.map(q => `
                 <div class="quote-card">
-                    <div class="quote-text">${q.quote}</div>
+                    <div class="quote-text">"${q.quote}"</div>
                     <div class="quote-author">-${q.author} <span class="date">Date Added: ${q.date_added || 'Unknown'}</span></div>
                 </div>
             `).join('');
