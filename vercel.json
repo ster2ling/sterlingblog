@@ -3,56 +3,16 @@
   "functions": {
     "api/**/*.js": { "runtime": "vercel-node@3.0.0" }
   },
-  "redirects": [
-    {
-      "source": "/(.*)\\.html$",
-      "destination": "/$1",
-      "permanent": true
-    },
-    {
-      "source": "/index.html",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/admin.html",
-      "destination": "/admin",
-      "permanent": true
-    },
-    {
-      "source": "/home.html",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/Blog.html",
-      "destination": "/blog",
-      "permanent": true
-    },
-    {
-      "source": "/quotebook.html",
-      "destination": "/quotebook",
-      "permanent": true
-    },
-    {
-      "source": "/other.html",
-      "destination": "/other",
-      "permanent": true
-    },
-    {
-      "source": "/basement.html",
-      "destination": "/basement",
-      "permanent": true
-    },
-    {
-      "source": "/about.html",
-      "destination": "/about",
-      "permanent": true
-    },
-    {
-      "source": "/sitemap.html",
-      "destination": "/sitemap",
-      "permanent": true
-    }
+  "routes": [
+    { "src": "/(.*)\\.html$", "dest": "/$1", "status": 308 },
+    { "src": "/index.html", "dest": "/", "status": 308 },
+    { "src": "/admin.html", "dest": "/admin", "status": 308 },
+    { "src": "/home.html", "dest": "/", "status": 308 },
+    { "src": "/Blog.html", "dest": "/blog", "status": 308 },
+    { "src": "/quotebook.html", "dest": "/quotebook", "status": 308 },
+    { "src": "/other.html", "dest": "/other", "status": 308 },
+    { "src": "/basement.html", "dest": "/basement", "status": 308 },
+    { "src": "/about.html", "dest": "/about", "status": 308 },
+    { "src": "/sitemap.html", "dest": "/sitemap", "status": 308 }
   ]
 }
