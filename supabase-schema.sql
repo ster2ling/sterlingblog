@@ -177,3 +177,82 @@ CREATE POLICY IF NOT EXISTS "Allow public update to basement_users" ON basement_
 INSERT INTO admin_settings (id, mood_description, home_thread, image_path, image_alt) 
 VALUES (1, 'i want to see my girlfriend', '', 'images/avatar.JPG', '')
 ON CONFLICT (id) DO NOTHING;
+
+-- =========================
+-- Chat Moderation Tables
+-- =========================
+
+-- Banned users table
+CREATE TABLE IF NOT EXISTS basement_banned_users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sid TEXT UNIQUE,
+    name TEXT,
+    reason TEXT,
+    banned_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    banned_by TEXT DEFAULT 'Admin',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Muted users table
+CREATE TABLE IF NOT EXISTS basement_muted_users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sid TEXT UNIQUE,
+    name TEXT,
+    muted_until BIGINT,
+    reason TEXT,
+    muted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    muted_by TEXT DEFAULT 'Admin',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Chat settings table (for slow mode, lockdown, MOTD)
+CREATE TABLE IF NOT EXISTS basement_chat_settings (
+    id INTEGER PRIMARY KEY DEFAULT 1,
+    slow_mode_seconds INTEGER DEFAULT 0,
+    lockdown_mode BOOLEAN DEFAULT false,
+    motd TEXT DEFAULT '',
+    pinned_message_id UUID,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Add columns to basement_chat for pinning and editing
+ALTER TABLE basement_chat ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT false;
+ALTER TABLE basement_chat ADD COLUMN IF NOT EXISTS edited_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE basement_chat ADD COLUMN IF NOT EXISTS sid TEXT;
+
+-- Add columns to basement_users for avatars and status
+ALTER TABLE basement_users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+ALTER TABLE basement_users ADD COLUMN IF NOT EXISTS is_kicked BOOLEAN DEFAULT false;
+
+-- Enable RLS
+ALTER TABLE basement_banned_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE basement_muted_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE basement_chat_settings ENABLE ROW LEVEL SECURITY;
+
+-- Public read policies
+CREATE POLICY "Allow public read access to basement_banned_users" ON basement_banned_users
+    FOR SELECT USING (true);
+CREATE POLICY "Allow public read access to basement_muted_users" ON basement_muted_users
+    FOR SELECT USING (true);
+CREATE POLICY "Allow public read access to basement_chat_settings" ON basement_chat_settings
+    FOR SELECT USING (true);
+
+-- Admin-only write policies (for now, allow all - you can add auth later)
+CREATE POLICY "Allow public insert to basement_banned_users" ON basement_banned_users
+    FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public insert to basement_muted_users" ON basement_muted_users
+    FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public delete from basement_banned_users" ON basement_banned_users
+    FOR DELETE USING (true);
+CREATE POLICY "Allow public delete from basement_muted_users" ON basement_muted_users
+    FOR DELETE USING (true);
+CREATE POLICY "Allow public update to basement_chat_settings" ON basement_chat_settings
+    FOR UPDATE USING (true);
+CREATE POLICY "Allow public update to basement_chat for pinning" ON basement_chat
+    FOR UPDATE USING (true);
+
+-- Insert initial chat settings
+INSERT INTO basement_chat_settings (id, slow_mode_seconds, lockdown_mode, motd) 
+VALUES (1, 0, false, 'Welcome to the basement!')
+ON CONFLICT (id) DO NOTHING;

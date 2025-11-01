@@ -111,14 +111,14 @@ and change the media query according to the comment! */
     display: grid;
     margin: auto;
     max-width: 1100px;
-    max-height: 1180px;
+    max-height: none;
     grid-template-areas: 
     "navbar navbar navbar"
     "sidebar main activity"
     "sidebar main updates"
     "footer footer footer";
     grid-template-columns: 23% 52% 25%;
-    grid-template-rows: 50px 390px 390px 50px;
+    grid-template-rows: 50px 390px 390px auto;
     gap: 10px;
     padding: 20px 75px 20px 20px;
   }

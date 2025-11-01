@@ -253,6 +253,45 @@
                 <button class="btn btn-danger" onclick="clearAllSuggestions()">Clear All Suggestions</button>
             </div>
             
+            <!-- Chat Moderation -->
+            <div style="background: #f0f0f0; border: 1px solid #ccc; padding: 10px; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 10px 0; color: #000080;">Basement Chat Moderation</h4>
+                
+                <!-- Chat Settings -->
+                <div style="margin-bottom: 15px; padding: 10px; background: white; border: 1px solid #ccc;">
+                    <h5 style="margin: 0 0 10px 0;">Chat Settings</h5>
+                    <div style="margin-bottom: 10px;">
+                        <label><input type="checkbox" id="lockdownMode"> Lockdown Mode (Admin Only)</label>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label>Slow Mode: <input type="number" id="slowModeSeconds" min="0" max="300" value="0" style="width: 60px;"> seconds between messages</label>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label>MOTD: <input type="text" id="motdText" placeholder="Message of the Day" style="width: 300px;"></label>
+                    </div>
+                    <button class="btn" onclick="updateChatSettings()">Update Settings</button>
+                </div>
+                
+                <!-- Banned Users -->
+                <div style="margin-bottom: 15px; padding: 10px; background: white; border: 1px solid #ccc;">
+                    <h5 style="margin: 0 0 10px 0;">Banned Users</h5>
+                    <div id="bannedUsersList" style="max-height: 200px; overflow-y: auto;"></div>
+                </div>
+                
+                <!-- Muted Users -->
+                <div style="margin-bottom: 15px; padding: 10px; background: white; border: 1px solid #ccc;">
+                    <h5 style="margin: 0 0 10px 0;">Muted Users</h5>
+                    <div id="mutedUsersList" style="max-height: 200px; overflow-y: auto;"></div>
+                </div>
+                
+                <!-- Recent Messages -->
+                <div style="margin-bottom: 10px;">
+                    <h5 style="margin: 0 0 10px 0;">Recent Messages</h5>
+                    <div id="chatMessagesList" style="max-height: 300px; overflow-y: auto;"></div>
+                    <button class="btn btn-danger" onclick="clearAllChatMessages()">Clear All Chat Messages</button>
+                </div>
+            </div>
+            
             <!-- Data Management -->
             <div style="background: #f0f0f0; border: 1px solid #ccc; padding: 10px;">
                 <h4 style="margin: 0 0 10px 0; color: #000080;">Data Backup</h4>
@@ -904,6 +943,115 @@
             }
         }
 
+        // Chat Moderation Functions
+        async function loadChatMessages() {
+            try {
+                const response = await fetch('/api/basement/chat');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch chat messages');
+                }
+                
+                const messages = await response.json();
+                const container = document.getElementById('chatMessagesList');
+                
+                if (messages.length === 0) {
+                    container.innerHTML = '<p>No chat messages yet.</p>';
+                    return;
+                }
+                
+                // Group messages by user for activity logs
+                const messagesByUser = {};
+                messages.forEach(m => {
+                    if (!messagesByUser[m.author]) {
+                        messagesByUser[m.author] = [];
+                    }
+                    messagesByUser[m.author].push(m);
+                });
+                
+                container.innerHTML = messages.slice(-20).reverse().map((m) => `
+                    <div class="suggestion-item">
+                        <div class="meta">[${m.timestamp}] ${m.author} (${Object.keys(messagesByUser[m.author] || {}).length} total msgs)</div>
+                        <div class="content">${m.message}</div>
+                        <button class="btn btn-danger" onclick="deleteChatMessage('${m.id}')">Delete</button>
+                        <button class="btn" onclick="viewUserActivity('${m.author}')">View Activity</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading chat messages:', error);
+                document.getElementById('chatMessagesList').innerHTML = '<p>Error loading chat messages.</p>';
+            }
+        }
+        
+        async function viewUserActivity(username) {
+            try {
+                const response = await fetch('/api/basement/chat');
+                if (!response.ok) return;
+                
+                const allMessages = await response.json();
+                const userMessages = allMessages.filter(m => m.author === username);
+                
+                const report = `
+                    <h4>Activity Log for: ${username}</h4>
+                    <p>Total messages: ${userMessages.length}</p>
+                    <p>First message: ${userMessages[0] ? userMessages[0].timestamp : 'N/A'}</p>
+                    <p>Last message: ${userMessages[userMessages.length - 1] ? userMessages[userMessages.length - 1].timestamp : 'N/A'}</p>
+                    <hr>
+                    <h5>Recent messages:</h5>
+                    ${userMessages.slice(-10).map(m => `<p><small>[${m.timestamp}]</small> ${m.message}</p>`).join('')}
+                `;
+                
+                alert(report); // Or you could show this in a modal
+            } catch (error) {
+                console.error('Error viewing user activity:', error);
+            }
+        }
+
+        async function deleteChatMessage(id) {
+            if (confirm('Delete this message?')) {
+                try {
+                    const response = await fetch(`/api/basement/chat/${id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to delete message');
+                    }
+                    
+                    await loadChatMessages();
+                    alert('Message deleted!');
+                } catch (error) {
+                    console.error('Error deleting message:', error);
+                    alert('Failed to delete message.');
+                }
+            }
+        }
+
+        async function clearAllChatMessages() {
+            if (confirm('Are you sure you want to delete ALL chat messages? This cannot be undone!')) {
+                try {
+                    const response = await fetch('/api/basement/chat');
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch messages');
+                    }
+                    
+                    const messages = await response.json();
+                    
+                    // Delete each message
+                    for (const message of messages) {
+                        await fetch(`/api/basement/chat/${message.id}`, {
+                            method: 'DELETE'
+                        });
+                    }
+                    
+                    await loadChatMessages();
+                    alert('All chat messages cleared!');
+                } catch (error) {
+                    console.error('Error clearing messages:', error);
+                    alert('Failed to clear messages.');
+                }
+            }
+        }
+
         // Data Export/Import
         function exportData() {
             const data = {
@@ -951,9 +1099,153 @@
             reader.readAsText(file);
         }
         
+        // Chat Settings Functions
+        async function updateChatSettings() {
+            const lockdownMode = document.getElementById('lockdownMode').checked;
+            const slowModeSeconds = parseInt(document.getElementById('slowModeSeconds').value) || 0;
+            const motd = document.getElementById('motdText').value;
+            
+            try {
+                const response = await fetch('/api/basement/moderation?action=settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lockdown_mode: lockdownMode, slow_mode_seconds: slowModeSeconds, motd })
+                });
+                
+                if (response.ok) {
+                    alert('Chat settings updated!');
+                } else {
+                    alert('Failed to update settings');
+                }
+            } catch (error) {
+                console.error('Error updating chat settings:', error);
+                alert('Error updating settings');
+            }
+        }
+        
+        async function loadChatSettings() {
+            try {
+                const response = await fetch('/api/basement/moderation?action=settings');
+                if (!response.ok) return;
+                
+                const settings = await response.json();
+                document.getElementById('lockdownMode').checked = settings.lockdown_mode || false;
+                document.getElementById('slowModeSeconds').value = settings.slow_mode_seconds || 0;
+                document.getElementById('motdText').value = settings.motd || '';
+            } catch (error) {
+                console.error('Error loading chat settings:', error);
+            }
+        }
+        
+        async function loadBannedUsers() {
+            try {
+                const response = await fetch('/api/basement/moderation?action=banned');
+                if (!response.ok) return;
+                
+                const banned = await response.json();
+                const container = document.getElementById('bannedUsersList');
+                
+                if (banned.length === 0) {
+                    container.innerHTML = '<p>No banned users.</p>';
+                    return;
+                }
+                
+                container.innerHTML = banned.map(b => `
+                    <div class="suggestion-item">
+                        <div class="meta">Banned: ${new Date(b.banned_at).toLocaleString()}</div>
+                        <div class="content"><strong>${b.name}</strong></div>
+                        <div style="font-size: 11px; color: #666;">Reason: ${b.reason || 'None'}</div>
+                        <button class="btn" onclick="unbanUser('${b.sid}')">Unban</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading banned users:', error);
+            }
+        }
+        
+        async function loadMutedUsers() {
+            try {
+                const response = await fetch('/api/basement/moderation?action=muted');
+                if (!response.ok) return;
+                
+                const muted = await response.json();
+                const container = document.getElementById('mutedUsersList');
+                
+                // Filter out expired mutes
+                const activeMuted = muted.filter(m => m.muted_until > Date.now());
+                
+                if (activeMuted.length === 0) {
+                    container.innerHTML = '<p>No muted users.</p>';
+                    return;
+                }
+                
+                container.innerHTML = activeMuted.map(m => {
+                    const timeLeft = Math.ceil((m.muted_until - Date.now()) / 60000);
+                    return `
+                    <div class="suggestion-item">
+                        <div class="meta">Muted: ${new Date(m.muted_at).toLocaleString()}</div>
+                        <div class="content"><strong>${m.name}</strong> - ${timeLeft} min left</div>
+                        <div style="font-size: 11px; color: #666;">Reason: ${m.reason || 'None'}</div>
+                        <button class="btn" onclick="unmuteUser('${m.sid}')">Unmute</button>
+                    </div>
+                `}).join('');
+            } catch (error) {
+                console.error('Error loading muted users:', error);
+            }
+        }
+        
+        async function unbanUser(sid) {
+            try {
+                const response = await fetch('/api/basement/moderation?action=unban', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sid })
+                });
+                
+                if (response.ok) {
+                    alert('User unbanned!');
+                    loadBannedUsers();
+                } else {
+                    alert('Failed to unban user');
+                }
+            } catch (error) {
+                console.error('Error unbanning user:', error);
+                alert('Error unbanning user');
+            }
+        }
+        
+        async function unmuteUser(sid) {
+            try {
+                const response = await fetch('/api/basement/moderation?action=unmute', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sid })
+                });
+                
+                if (response.ok) {
+                    alert('User unmuted!');
+                    loadMutedUsers();
+                } else {
+                    alert('Failed to unmute user');
+                }
+            } catch (error) {
+                console.error('Error unmuting user:', error);
+                alert('Error unmuting user');
+            }
+        }
+        
         // Check authorization on page load
         document.addEventListener('DOMContentLoaded', function() {
             checkExistingSession();
+            // Load chat messages for moderation
+            loadChatMessages();
+            loadChatSettings();
+            loadBannedUsers();
+            loadMutedUsers();
+            // Auto-refresh chat messages every 5 seconds
+            setInterval(loadChatMessages, 5000);
+            setInterval(loadBannedUsers, 10000);
+            setInterval(loadMutedUsers, 10000);
         });
     </script>
 </body>

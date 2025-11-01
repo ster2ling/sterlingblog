@@ -500,8 +500,46 @@ app.post('/api/basement/chat', async (req, res) => {
   try {
     const { message, timestamp } = req.body;
     if (!message) return res.status(400).json({ error: 'Message is required' });
-    // Resolve author from sid to prevent impersonation
+    
     const sid = req.cookies.sid;
+    
+    // Check if user is banned
+    const { data: banned } = await supabase
+      .from('basement_banned_users')
+      .select('*')
+      .eq('sid', sid)
+      .maybeSingle();
+    
+    if (banned) {
+      return res.status(403).json({ error: 'You are banned from the chat', reason: banned.reason });
+    }
+    
+    // Check if user is muted
+    const { data: muted } = await supabase
+      .from('basement_muted_users')
+      .select('*')
+      .eq('sid', sid)
+      .maybeSingle();
+    
+    if (muted && muted.muted_until > Date.now()) {
+      const timeLeft = Math.ceil((muted.muted_until - Date.now()) / 60000);
+      return res.status(403).json({ error: `You are muted for ${timeLeft} more minutes`, reason: muted.reason });
+    }
+    
+    // Get chat settings for slow mode check
+    const { data: settings } = await supabase
+      .from('basement_chat_settings')
+      .select('slow_mode_seconds, lockdown_mode')
+      .eq('id', 1)
+      .maybeSingle();
+    
+    // Check lockdown mode
+    if (settings && settings.lockdown_mode) {
+      // Only allow admins (you can add admin check here)
+      return res.status(403).json({ error: 'Chat is in lockdown mode - admin only' });
+    }
+    
+    // Resolve author from sid to prevent impersonation
     let authorName = 'Anonymous';
     try {
       const { data: u } = await supabase
@@ -511,17 +549,35 @@ app.post('/api/basement/chat', async (req, res) => {
         .single();
       if (u && u.name) authorName = u.name;
     } catch (_) {}
+    
     const msg = {
       author: authorName,
       message,
       timestamp: timestamp || new Date().toLocaleTimeString(),
-      created_at_ms: Date.now()
+      created_at_ms: Date.now(),
+      sid: sid
     };
     const saved = await addBasementMessage(msg);
     res.json(saved);
   } catch (error) {
     console.error('Error adding basement message:', error);
     res.status(500).json({ error: 'Failed to add message' });
+  }
+});
+
+app.delete('/api/basement/chat/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase
+      .from('basement_chat')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting basement message:', error);
+    res.status(500).json({ error: 'Failed to delete message' });
   }
 });
 

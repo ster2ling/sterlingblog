@@ -586,6 +586,9 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                             </div>
                         </div>
                         <div class="window-content">
+                            <div id="motd-display" style="background: #ffffcc; padding: 5px 10px; border-bottom: 1px solid #ccc; font-size: 11px; display: none;">
+                                <strong>📢 MOTD:</strong> <span id="motd-text"></span>
+                            </div>
                             <div class="chat-messages" id="chat-messages">
                                 <div class="message">
                                     <span class="message-time">[System]</span> Welcome to the basement chatroom! 🎉
@@ -692,11 +695,34 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
         // Chatroom functionality
         let chatMessages = [];
         let currentUser = 'Anonymous';
+        let lastMessageTimestamp = 0;
+        
+        async function loadMOTD() {
+            try {
+                const response = await fetch('/api/basement/moderation?action=settings');
+                if (!response.ok) return;
+                
+                const settings = await response.json();
+                if (settings.motd && settings.motd.trim()) {
+                    document.getElementById('motd-text').textContent = settings.motd;
+                    document.getElementById('motd-display').style.display = 'block';
+                } else {
+                    document.getElementById('motd-display').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading MOTD:', error);
+            }
+        }
         
         document.addEventListener('DOMContentLoaded', function() {
             initializeChatroom();
             initializeMusicPlayer();
             loadChatHistory();
+            loadMOTD();
+            // Poll for new messages every half second
+            setInterval(loadChatHistory, 500);
+            // Refresh MOTD every 30 seconds
+            setInterval(loadMOTD, 30000);
         });
         
         function initializeChatroom() {
@@ -729,29 +755,31 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             });
         }
         
-        function sendMessage() {
+        async function sendMessage() {
             const chatInput = document.getElementById('chat-input');
             const message = chatInput.value.trim();
             
             if (message) {
-                const timestamp = new Date().toLocaleTimeString();
-                const messageObj = {
-                    author: currentUser,
-                    message: message,
-                    timestamp: timestamp,
-                    id: Date.now()
-                };
-                
-                chatMessages.push(messageObj);
-                addMessageToChat(messageObj);
-                chatInput.value = '';
-                
-                // Save to localStorage
-                localStorage.setItem('basementChat', JSON.stringify(chatMessages.slice(-50)));
-                
-                // Scroll to bottom
-                const chatContainer = document.getElementById('chat-messages');
-                chatContainer.scrollTop = chatContainer.scrollHeight;
+                try {
+                    const response = await fetch('/api/basement/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: message })
+                    });
+                    
+                    if (response.ok) {
+                        chatInput.value = '';
+                        // Load new messages immediately
+                        loadChatHistory();
+                    } else {
+                        // Show error message (banned, muted, slow mode, etc.)
+                        const errorData = await response.json();
+                        alert(errorData.error || 'Failed to send message');
+                    }
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    alert('Error sending message');
+                }
             }
         }
         
@@ -759,19 +787,96 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             const chatContainer = document.getElementById('chat-messages');
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message';
+            
+            // Check if user is admin (has adminSession cookie)
+            const isAdmin = document.cookie.includes('adminSession=');
+            const deleteBtn = isAdmin ? `<button onclick="deleteMessage('${messageObj.id}')" style="margin-left: 10px; padding: 2px 6px; font-size: 10px; background: #ffcccc; border: 1px solid #ff9999; cursor: pointer;">Delete</button>` : '';
+            const pinBtn = isAdmin ? `<button onclick="pinMessage('${messageObj.id}')" style="margin-left: 5px; padding: 2px 6px; font-size: 10px; background: #ccddff; border: 1px solid #6699ff; cursor: pointer;">${messageObj.is_pinned ? 'Unpin' : 'Pin'}</button>` : '';
+            const pinnedBadge = messageObj.is_pinned ? `<span style="background: #ffcc00; padding: 2px 6px; font-size: 9px; margin-left: 5px; border-radius: 3px;">📌 PINNED</span>` : '';
+            
             messageDiv.innerHTML = `
                 <span class="message-time">[${messageObj.timestamp}]</span>
                 <span class="message-author">${messageObj.author}:</span>
                 ${escapeHtml(messageObj.message)}
+                ${pinnedBadge}
+                ${deleteBtn}
+                ${pinBtn}
             `;
-            chatContainer.appendChild(messageDiv);
+            
+            // If pinned, insert at top
+            if (messageObj.is_pinned) {
+                chatContainer.insertBefore(messageDiv, chatContainer.firstChild);
+            } else {
+                chatContainer.appendChild(messageDiv);
+            }
         }
         
-        function loadChatHistory() {
-            const savedChat = localStorage.getItem('basementChat');
-            if (savedChat) {
-                chatMessages = JSON.parse(savedChat);
-                chatMessages.forEach(msg => addMessageToChat(msg));
+        async function pinMessage(id) {
+            try {
+                const response = await fetch('/api/basement/moderation?action=pin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messageId: id })
+                });
+                
+                if (response.ok) {
+                    // Reload chat to show pinned message at top
+                    document.getElementById('chat-messages').innerHTML = '';
+                    lastMessageTimestamp = 0;
+                    loadChatHistory();
+                } else {
+                    alert('Failed to pin message');
+                }
+            } catch (error) {
+                console.error('Error pinning message:', error);
+                alert('Error pinning message');
+            }
+        }
+        
+        async function deleteMessage(id) {
+            if (confirm('Delete this message?')) {
+                try {
+                    const response = await fetch(`/api/basement/chat/${id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        // Clear and reload all messages
+                        document.getElementById('chat-messages').innerHTML = '';
+                        lastMessageTimestamp = 0;
+                        loadChatHistory();
+                    } else {
+                        alert('Failed to delete message');
+                    }
+                } catch (error) {
+                    console.error('Error deleting message:', error);
+                    alert('Error deleting message');
+                }
+            }
+        }
+        
+        async function loadChatHistory() {
+            try {
+                const response = await fetch('/api/basement/chat');
+                if (!response.ok) return;
+                
+                const messages = await response.json();
+                const chatContainer = document.getElementById('chat-messages');
+                
+                // Only add new messages (check by timestamp)
+                messages.forEach(msg => {
+                    if (msg.created_at_ms > lastMessageTimestamp) {
+                        addMessageToChat(msg);
+                        lastMessageTimestamp = msg.created_at_ms;
+                    }
+                });
+                
+                // Auto-scroll to bottom if new messages
+                if (messages.length > 0) {
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
             }
         }
         
@@ -967,11 +1072,24 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                   .then(users => {
                       const list = document.getElementById('users-list');
                       if (!list) return;
-                      list.innerHTML = users.map(u => `
+                      const isAdmin = document.cookie.includes('adminSession=');
+                      
+                      list.innerHTML = users.map(u => {
+                        const modButtons = isAdmin ? `
+                          <div style="margin-top: 2px;">
+                            <button onclick="banUser('${u.sid}', '${u.name}')" style="padding: 1px 4px; font-size: 9px; background: #ff6666; border: 1px solid #ff0000; cursor: pointer; margin-right: 2px;">Ban</button>
+                            <button onclick="kickUser('${u.sid}', '${u.name}')" style="padding: 1px 4px; font-size: 9px; background: #ffcc66; border: 1px solid #ff9900; cursor: pointer; margin-right: 2px;">Kick</button>
+                            <button onclick="muteUser('${u.sid}', '${u.name}')" style="padding: 1px 4px; font-size: 9px; background: #cccccc; border: 1px solid #999999; cursor: pointer;">Mute</button>
+                          </div>
+                        ` : '';
+                        
+                        return `
                         <div class="user-item online">
                           <div class="user-status online"></div>
                           <span class="user-name">${u.name}</span>
-                        </div>`).join('');
+                          ${modButtons}
+                        </div>`;
+                      }).join('');
                   }).catch(() => {});
             }
             ping();
@@ -981,6 +1099,77 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
         }
 
         document.addEventListener('DOMContentLoaded', startPresence);
+        
+        // Moderation Functions
+        async function banUser(sid, name) {
+            const reason = prompt(`Ban ${name}?\nReason (optional):`);
+            if (reason === null) return; // User cancelled
+            
+            try {
+                const response = await fetch('/api/basement/moderation?action=ban', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sid, name, reason })
+                });
+                
+                if (response.ok) {
+                    alert(`${name} has been banned!`);
+                    refreshList();
+                } else {
+                    alert('Failed to ban user');
+                }
+            } catch (error) {
+                console.error('Error banning user:', error);
+                alert('Error banning user');
+            }
+        }
+        
+        async function kickUser(sid, name) {
+            if (confirm(`Kick ${name}? They can rejoin immediately.`)) {
+                try {
+                    const response = await fetch('/api/basement/moderation?action=kick', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sid })
+                    });
+                    
+                    if (response.ok) {
+                        alert(`${name} has been kicked!`);
+                        refreshList();
+                    } else {
+                        alert('Failed to kick user');
+                    }
+                } catch (error) {
+                    console.error('Error kicking user:', error);
+                    alert('Error kicking user');
+                }
+            }
+        }
+        
+        async function muteUser(sid, name) {
+            const duration = prompt(`Mute ${name} for how many minutes?`, '10');
+            if (duration === null) return; // User cancelled
+            
+            const reason = prompt(`Reason for muting ${name}? (optional)`);
+            if (reason === null) return;
+            
+            try {
+                const response = await fetch('/api/basement/moderation?action=mute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sid, name, duration: parseInt(duration) || 10, reason })
+                });
+                
+                if (response.ok) {
+                    alert(`${name} has been muted for ${duration} minutes!`);
+                } else {
+                    alert('Failed to mute user');
+                }
+            } catch (error) {
+                console.error('Error muting user:', error);
+                alert('Error muting user');
+            }
+        }
         
         function handleMusicUpload(e) {
             const files = Array.from(e.target.files);

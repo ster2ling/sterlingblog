@@ -1,6 +1,13 @@
 const { createClient } = require('@supabase/supabase-js');
 const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
+// Helper to get SID from cookies
+function getSidFromCookie(req) {
+  const cookies = req.headers.cookie || '';
+  const sidMatch = cookies.match(/sid=([^;]+)/);
+  return sidMatch ? sidMatch[1] : null;
+}
+
 module.exports = async function handler(req, res) {
   try {
     if (req.method === 'GET') {
@@ -11,14 +18,90 @@ module.exports = async function handler(req, res) {
       if (since) data = data.filter(m => (m.created_at_ms || 0) > since);
       return res.status(200).json(data);
     }
+    
     if (req.method === 'POST') {
-      const { message, author } = req.body || {};
+      const { message } = req.body || {};
       if (!message) return res.status(400).json({ error: 'Message is required' });
-      const payload = { author: author || 'Anonymous', message, timestamp: new Date().toLocaleTimeString(), created_at_ms: Date.now() };
+      
+      const sid = getSidFromCookie(req);
+      
+      // Check if user is banned
+      const { data: banned } = await sb
+        .from('basement_banned_users')
+        .select('*')
+        .eq('sid', sid)
+        .maybeSingle();
+      
+      if (banned) {
+        return res.status(403).json({ error: 'You are banned from the chat', reason: banned.reason });
+      }
+      
+      // Check if user is muted
+      const { data: muted } = await sb
+        .from('basement_muted_users')
+        .select('*')
+        .eq('sid', sid)
+        .maybeSingle();
+      
+      if (muted && muted.muted_until > Date.now()) {
+        const timeLeft = Math.ceil((muted.muted_until - Date.now()) / 60000);
+        return res.status(403).json({ error: `You are muted for ${timeLeft} more minutes`, reason: muted.reason });
+      }
+      
+      // Get chat settings for lockdown mode
+      const { data: settings } = await sb
+        .from('basement_chat_settings')
+        .select('lockdown_mode')
+        .eq('id', 1)
+        .maybeSingle();
+      
+      // Check lockdown mode
+      if (settings && settings.lockdown_mode) {
+        return res.status(403).json({ error: 'Chat is in lockdown mode - admin only' });
+      }
+      
+      // Check slow mode
+      if (settings && settings.slow_mode_seconds > 0) {
+        const { data: lastMsg } = await sb
+          .from('basement_chat')
+          .select('created_at_ms')
+          .eq('sid', sid)
+          .order('created_at_ms', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (lastMsg) {
+          const timeSinceLastMsg = (Date.now() - lastMsg.created_at_ms) / 1000;
+          if (timeSinceLastMsg < settings.slow_mode_seconds) {
+            const waitTime = Math.ceil(settings.slow_mode_seconds - timeSinceLastMsg);
+            return res.status(429).json({ error: `Slow mode: wait ${waitTime} more seconds` });
+          }
+        }
+      }
+      
+      // Resolve author from sid to prevent impersonation
+      let authorName = 'Anonymous';
+      try {
+        const { data: u } = await sb
+          .from('basement_users')
+          .select('name, sid')
+          .eq('sid', sid)
+          .single();
+        if (u && u.name) authorName = u.name;
+      } catch (_) {}
+      
+      const payload = { 
+        author: authorName, 
+        message, 
+        timestamp: new Date().toLocaleTimeString(), 
+        created_at_ms: Date.now(),
+        sid: sid
+      };
       const { data, error } = await sb.from('basement_chat').insert(payload).select().single();
       if (error) throw error;
       return res.status(200).json(data);
     }
+    
     res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
   } catch (e) {
