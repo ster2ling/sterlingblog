@@ -3,7 +3,7 @@
   "builds": [
     { "src": "api/**/*.js", "use": "@vercel/node" },
     { "src": "**/*", "use": "@vercel/static" }
-  ]
+  ],
   "routes": [
     { "src": "/(.*)\\.html$", "dest": "/$1", "status": 308 },
     { "src": "/index.html", "dest": "/", "status": 308 },
