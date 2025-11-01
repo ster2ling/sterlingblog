@@ -7,6 +7,7 @@
     <link rel="icon" type="image/x-icon" href="../favicon.ico">
     <link rel="apple-touch-icon" href="../favicon.svg"> 
     <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
       window.BUILD_TIME = 1761615228000;
       window.VERCEL_BUILD_TIME = 1761615228000;
@@ -581,7 +582,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                             <span>💬 Basement Chatroom</span>
                             <div class="title-bar-controls">
                                 <button aria-label="Minimize">_</button>
-                                <button aria-label="Maximize">□</button>
+                                <button aria-label="Maximize" onclick="openAdminPanel(); return false;">□</button>
                                 <button aria-label="Close">×</button>
                             </div>
                         </div>
@@ -788,11 +789,19 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message';
             
-            // Check if user is admin (has adminSession cookie)
-            const isAdmin = document.cookie.includes('adminSession=');
-            const deleteBtn = isAdmin ? `<button onclick="deleteMessage('${messageObj.id}')" style="margin-left: 10px; padding: 2px 6px; font-size: 10px; background: #ffcccc; border: 1px solid #ff9999; cursor: pointer;">Delete</button>` : '';
-            const pinBtn = isAdmin ? `<button onclick="pinMessage('${messageObj.id}')" style="margin-left: 5px; padding: 2px 6px; font-size: 10px; background: #ccddff; border: 1px solid #6699ff; cursor: pointer;">${messageObj.is_pinned ? 'Unpin' : 'Pin'}</button>` : '';
-            const pinnedBadge = messageObj.is_pinned ? `<span style="background: #ffcc00; padding: 2px 6px; font-size: 9px; margin-left: 5px; border-radius: 3px;">📌 PINNED</span>` : '';
+            // Check if user is admin
+            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            // Check if this is the user's own message
+            const nicknameInput = document.getElementById('nickname-input');
+            const currentNickname = nicknameInput ? (nicknameInput.value || 'Anonymous') : 'Anonymous';
+            const isOwnMessage = messageObj.author === currentNickname;
+            
+            // Show delete button for own messages or if admin
+            const deleteBtn = (isOwnMessage || isAdmin) ? `<i class="fa-solid fa-trash" onclick="deleteMessage('${messageObj.id}')" title="Delete message" style="margin-left: 8px; cursor: pointer; color: #cc0000; font-size: 11px;"></i>` : '';
+            const muteBtn = isAdmin && messageObj.author !== 'System' && messageObj.author !== currentNickname ? `<i class="fa-solid fa-volume-xmark" onclick="muteUserByName('${messageObj.author}')" title="Mute ${messageObj.author}" style="margin-left: 5px; cursor: pointer; color: #666; font-size: 11px;"></i>` : '';
+            const banBtn = isAdmin && messageObj.author !== 'System' && messageObj.author !== currentNickname ? `<i class="fa-solid fa-ban" onclick="banUserByName('${messageObj.author}')" title="Ban ${messageObj.author}" style="margin-left: 5px; cursor: pointer; color: #cc0000; font-size: 11px;"></i>` : '';
+            const pinBtn = isAdmin ? `<i class="fa-solid fa-thumbtack" onclick="pinMessage('${messageObj.id}')" title="${messageObj.is_pinned ? 'Unpin' : 'Pin'} message" style="margin-left: 5px; cursor: pointer; color: ${messageObj.is_pinned ? '#0066cc' : '#666'}; font-size: 11px;"></i>` : '';
+            const pinnedBadge = messageObj.is_pinned ? `<span style="background: #ffcc00; padding: 2px 6px; font-size: 9px; margin-left: 5px; border-radius: 3px;">PINNED</span>` : '';
             
             messageDiv.innerHTML = `
                 <span class="message-time">[${messageObj.timestamp}]</span>
@@ -800,6 +809,8 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                 ${escapeHtml(messageObj.message)}
                 ${pinnedBadge}
                 ${deleteBtn}
+                ${muteBtn}
+                ${banBtn}
                 ${pinBtn}
             `;
             
@@ -1072,14 +1083,14 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                   .then(users => {
                       const list = document.getElementById('users-list');
                       if (!list) return;
-                      const isAdmin = document.cookie.includes('adminSession=');
+                      const isAdmin = localStorage.getItem('isAdmin') === 'true';
                       
                       list.innerHTML = users.map(u => {
                         const modButtons = isAdmin ? `
-                          <div style="margin-top: 2px;">
-                            <button onclick="banUser('${u.sid}', '${u.name}')" style="padding: 1px 4px; font-size: 9px; background: #ff6666; border: 1px solid #ff0000; cursor: pointer; margin-right: 2px;">Ban</button>
-                            <button onclick="kickUser('${u.sid}', '${u.name}')" style="padding: 1px 4px; font-size: 9px; background: #ffcc66; border: 1px solid #ff9900; cursor: pointer; margin-right: 2px;">Kick</button>
-                            <button onclick="muteUser('${u.sid}', '${u.name}')" style="padding: 1px 4px; font-size: 9px; background: #cccccc; border: 1px solid #999999; cursor: pointer;">Mute</button>
+                          <div style="margin-top: 3px;">
+                            <i class="fa-solid fa-ban" onclick="banUser('${u.sid}', '${u.name}')" title="Ban user" style="cursor: pointer; font-size: 11px; margin-right: 5px; color: #cc0000;"></i>
+                            <i class="fa-solid fa-right-from-bracket" onclick="kickUser('${u.sid}', '${u.name}')" title="Kick user" style="cursor: pointer; font-size: 11px; margin-right: 5px; color: #ff9900;"></i>
+                            <i class="fa-solid fa-volume-xmark" onclick="muteUser('${u.sid}', '${u.name}')" title="Mute user" style="cursor: pointer; font-size: 11px; color: #666;"></i>
                           </div>
                         ` : '';
                         
@@ -1171,6 +1182,44 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             }
         }
         
+        async function muteUserByName(name) {
+            // Find user's SID from the users list
+            try {
+                const response = await fetch('/api/basement/users');
+                if (!response.ok) return;
+                
+                const users = await response.json();
+                const user = users.find(u => u.name === name);
+                
+                if (user && user.sid) {
+                    muteUser(user.sid, name);
+                } else {
+                    alert('User not found or not online');
+                }
+            } catch (error) {
+                console.error('Error finding user:', error);
+            }
+        }
+        
+        async function banUserByName(name) {
+            // Find user's SID from the users list
+            try {
+                const response = await fetch('/api/basement/users');
+                if (!response.ok) return;
+                
+                const users = await response.json();
+                const user = users.find(u => u.name === name);
+                
+                if (user && user.sid) {
+                    banUser(user.sid, name);
+                } else {
+                    alert('User not found or not online');
+                }
+            } catch (error) {
+                console.error('Error finding user:', error);
+            }
+        }
+        
         function handleMusicUpload(e) {
             const files = Array.from(e.target.files);
             
@@ -1233,6 +1282,234 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             const visits = parseInt(localStorage.getItem('basementVisits') || '0') + 1;
             localStorage.setItem('basementVisits', visits.toString());
         });
+        // Admin Panel Popup
+        function openAdminPanel() {
+            console.log('Opening admin panel...');
+            console.log('Admin status:', localStorage.getItem('isAdmin'));
+            
+            // Check if user is admin
+            if (localStorage.getItem('isAdmin') !== 'true') {
+                alert('Admin access only! Please log in at /admin first.');
+                return;
+            }
+            
+            const modal = document.getElementById('admin-panel-modal');
+            console.log('Modal element:', modal);
+            
+            if (modal) {
+                modal.style.display = 'flex';
+                loadAdminPanelData();
+            } else {
+                console.error('Modal not found!');
+            }
+        }
+        
+        function closeAdminPanel() {
+            document.getElementById('admin-panel-modal').style.display = 'none';
+        }
+        
+        async function loadAdminPanelData() {
+            loadAdminChatSettings();
+            loadAdminBannedUsers();
+            loadAdminMutedUsers();
+        }
+        
+        async function loadAdminChatSettings() {
+            try {
+                const response = await fetch('/api/basement/moderation?action=settings');
+                if (!response.ok) return;
+                
+                const settings = await response.json();
+                document.getElementById('admin-lockdown').checked = settings.lockdown_mode || false;
+                document.getElementById('admin-slowmode').value = settings.slow_mode_seconds || 0;
+                document.getElementById('admin-motd').value = settings.motd || '';
+            } catch (error) {
+                console.error('Error loading admin settings:', error);
+            }
+        }
+        
+        async function updateAdminChatSettings() {
+            const lockdownMode = document.getElementById('admin-lockdown').checked;
+            const slowModeSeconds = parseInt(document.getElementById('admin-slowmode').value) || 0;
+            const motd = document.getElementById('admin-motd').value;
+            
+            try {
+                const response = await fetch('/api/basement/moderation?action=settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lockdown_mode: lockdownMode, slow_mode_seconds: slowModeSeconds, motd })
+                });
+                
+                if (response.ok) {
+                    alert('Settings updated!');
+                    loadMOTD(); // Refresh MOTD display
+                } else {
+                    const error = await response.json();
+                    alert('Failed to update: ' + (error.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error updating settings:', error);
+                alert('Error updating settings');
+            }
+        }
+        
+        async function loadAdminBannedUsers() {
+            try {
+                const response = await fetch('/api/basement/moderation?action=banned');
+                if (!response.ok) return;
+                
+                const banned = await response.json();
+                const container = document.getElementById('admin-banned-list');
+                
+                if (banned.length === 0) {
+                    container.innerHTML = '<p style="color: #666; font-size: 11px;">No banned users.</p>';
+                    return;
+                }
+                
+                container.innerHTML = banned.map(b => `
+                    <div style="padding: 5px; margin: 5px 0; background: #fff; border: 1px solid #ccc;">
+                        <strong>${b.name}</strong><br>
+                        <small style="color: #666;">Reason: ${b.reason || 'None'}</small><br>
+                        <button onclick="unbanUserFromPanel('${b.sid}')" style="padding: 2px 6px; font-size: 10px; margin-top: 3px;">Unban</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading banned users:', error);
+            }
+        }
+        
+        async function loadAdminMutedUsers() {
+            try {
+                const response = await fetch('/api/basement/moderation?action=muted');
+                if (!response.ok) return;
+                
+                const muted = await response.json();
+                const container = document.getElementById('admin-muted-list');
+                
+                const activeMuted = muted.filter(m => m.muted_until > Date.now());
+                
+                if (activeMuted.length === 0) {
+                    container.innerHTML = '<p style="color: #666; font-size: 11px;">No muted users.</p>';
+                    return;
+                }
+                
+                container.innerHTML = activeMuted.map(m => {
+                    const timeLeft = Math.ceil((m.muted_until - Date.now()) / 60000);
+                    return `
+                    <div style="padding: 5px; margin: 5px 0; background: #fff; border: 1px solid #ccc;">
+                        <strong>${m.name}</strong> - ${timeLeft} min left<br>
+                        <small style="color: #666;">Reason: ${m.reason || 'None'}</small><br>
+                        <button onclick="unmuteUserFromPanel('${m.sid}')" style="padding: 2px 6px; font-size: 10px; margin-top: 3px;">Unmute</button>
+                    </div>
+                `}).join('');
+            } catch (error) {
+                console.error('Error loading muted users:', error);
+            }
+        }
+        
+        async function unbanUserFromPanel(sid) {
+            try {
+                const response = await fetch('/api/basement/moderation?action=unban', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sid })
+                });
+                
+                if (response.ok) {
+                    loadAdminBannedUsers();
+                } else {
+                    alert('Failed to unban user');
+                }
+            } catch (error) {
+                console.error('Error unbanning user:', error);
+            }
+        }
+        
+        async function unmuteUserFromPanel(sid) {
+            try {
+                const response = await fetch('/api/basement/moderation?action=unmute', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sid })
+                });
+                
+                if (response.ok) {
+                    loadAdminMutedUsers();
+                } else {
+                    alert('Failed to unmute user');
+                }
+            } catch (error) {
+                console.error('Error unmuting user:', error);
+            }
+        }
+        
+        async function clearAllChat() {
+            if (confirm('Clear ALL chat messages? This cannot be undone!')) {
+                try {
+                    const response = await fetch('/api/basement/moderation?action=clear', {
+                        method: 'POST'
+                    });
+                    
+                    if (response.ok) {
+                        alert('All messages cleared!');
+                        document.getElementById('chat-messages').innerHTML = '';
+                        lastMessageTimestamp = 0;
+                        loadChatHistory();
+                    } else {
+                        alert('Failed to clear chat');
+                    }
+                } catch (error) {
+                    console.error('Error clearing chat:', error);
+                    alert('Error clearing chat');
+                }
+            }
+        }
     </script>
+    
+    <!-- Admin Panel Modal -->
+    <div id="admin-panel-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;">
+        <div class="window" style="width: 600px; max-height: 80vh; overflow-y: auto;">
+            <div class="title-bar">
+                <span>🛡️ Chat Admin Panel</span>
+                <div class="title-bar-controls">
+                    <button aria-label="Close" onclick="closeAdminPanel()">×</button>
+                </div>
+            </div>
+            <div class="window-body" style="padding: 15px;">
+                <!-- Chat Settings -->
+                <fieldset style="margin-bottom: 15px;">
+                    <legend>Chat Settings</legend>
+                    <div style="margin-bottom: 10px;">
+                        <label><input type="checkbox" id="admin-lockdown"> Lockdown Mode (Admin Only)</label>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label>Slow Mode: <input type="number" id="admin-slowmode" min="0" max="300" value="0" style="width: 60px;"> seconds</label>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label>MOTD:<br><input type="text" id="admin-motd" placeholder="Message of the Day" style="width: 100%;"></label>
+                    </div>
+                    <button onclick="updateAdminChatSettings()">Update Settings</button>
+                </fieldset>
+                
+                <!-- Banned Users -->
+                <fieldset style="margin-bottom: 15px;">
+                    <legend>Banned Users</legend>
+                    <div id="admin-banned-list" style="max-height: 150px; overflow-y: auto;"></div>
+                </fieldset>
+                
+                <!-- Muted Users -->
+                <fieldset style="margin-bottom: 15px;">
+                    <legend>Muted Users</legend>
+                    <div id="admin-muted-list" style="max-height: 150px; overflow-y: auto;"></div>
+                </fieldset>
+                
+                <!-- Actions -->
+                <fieldset>
+                    <legend>Danger Zone</legend>
+                    <button class="btn-danger" onclick="clearAllChat()">Clear All Messages</button>
+                </fieldset>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

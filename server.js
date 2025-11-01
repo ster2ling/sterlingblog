@@ -635,6 +635,179 @@ app.post('/api/basement/playlist', async (req, res) => {
   }
 });
 
+// Basement Moderation Routes
+app.get('/api/basement/moderation', async (req, res) => {
+  try {
+    const { action } = req.query;
+    
+    if (action === 'banned') {
+      const { data, error } = await supabase
+        .from('basement_banned_users')
+        .select('*')
+        .order('banned_at', { ascending: false });
+      if (error) throw error;
+      return res.json(data || []);
+    }
+    
+    if (action === 'muted') {
+      const { data, error } = await supabase
+        .from('basement_muted_users')
+        .select('*')
+        .order('muted_at', { ascending: false });
+      if (error) throw error;
+      return res.json(data || []);
+    }
+    
+    if (action === 'settings') {
+      const { data, error } = await supabase
+        .from('basement_chat_settings')
+        .select('*')
+        .eq('id', 1)
+        .single();
+      if (error) throw error;
+      return res.json(data || { slow_mode_seconds: 0, lockdown_mode: false, motd: '' });
+    }
+    
+    res.status(400).json({ error: 'Invalid action' });
+  } catch (error) {
+    console.error('Error in moderation GET:', error);
+    res.status(500).json({ error: 'Failed to fetch moderation data' });
+  }
+});
+
+app.post('/api/basement/moderation', async (req, res) => {
+  try {
+    const { action } = req.query;
+    
+    if (action === 'ban') {
+      const { sid, name, reason } = req.body;
+      if (!sid) return res.status(400).json({ error: 'SID required' });
+      
+      const { data, error } = await supabase
+        .from('basement_banned_users')
+        .insert({ sid, name, reason: reason || 'No reason provided', banned_by: 'Admin' })
+        .select()
+        .single();
+      if (error) throw error;
+      return res.json(data);
+    }
+    
+    if (action === 'mute') {
+      const { sid, name, duration, reason } = req.body;
+      if (!sid) return res.status(400).json({ error: 'SID required' });
+      
+      const mutedUntil = Date.now() + (duration || 10) * 60 * 1000;
+      const { data, error } = await supabase
+        .from('basement_muted_users')
+        .insert({ sid, name, muted_until: mutedUntil, reason: reason || 'No reason provided', muted_by: 'Admin' })
+        .select()
+        .single();
+      if (error) throw error;
+      return res.json(data);
+    }
+    
+    if (action === 'kick') {
+      const { sid } = req.body;
+      if (!sid) return res.status(400).json({ error: 'SID required' });
+      
+      await supabase.from('basement_users').delete().eq('sid', sid);
+      return res.json({ success: true });
+    }
+    
+    if (action === 'clear') {
+      const { error } = await supabase.from('basement_chat').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error) throw error;
+      return res.json({ success: true });
+    }
+    
+    if (action === 'settings') {
+      const { slow_mode_seconds, lockdown_mode, motd } = req.body;
+      
+      const payload = {};
+      if (slow_mode_seconds !== undefined) payload.slow_mode_seconds = slow_mode_seconds;
+      if (lockdown_mode !== undefined) payload.lockdown_mode = lockdown_mode;
+      if (motd !== undefined) payload.motd = motd;
+      payload.updated_at = new Date().toISOString();
+      
+      const { data, error } = await supabase
+        .from('basement_chat_settings')
+        .update(payload)
+        .eq('id', 1)
+        .select()
+        .single();
+      if (error) throw error;
+      return res.json(data);
+    }
+    
+    if (action === 'pin') {
+      const { messageId } = req.body;
+      if (!messageId) return res.status(400).json({ error: 'Message ID required' });
+      
+      await supabase.from('basement_chat').update({ is_pinned: false }).eq('is_pinned', true);
+      const { data, error } = await supabase
+        .from('basement_chat')
+        .update({ is_pinned: true })
+        .eq('id', messageId)
+        .select()
+        .single();
+      if (error) throw error;
+      return res.json(data);
+    }
+    
+    if (action === 'unpin') {
+      const { messageId } = req.body;
+      const { data, error } = await supabase
+        .from('basement_chat')
+        .update({ is_pinned: false })
+        .eq('id', messageId)
+        .select()
+        .single();
+      if (error) throw error;
+      return res.json(data);
+    }
+    
+    res.status(400).json({ error: 'Invalid action' });
+  } catch (error) {
+    console.error('Error in moderation POST:', error);
+    res.status(500).json({ error: 'Failed to perform moderation action' });
+  }
+});
+
+app.delete('/api/basement/moderation', async (req, res) => {
+  try {
+    const { action } = req.query;
+    
+    if (action === 'unban') {
+      const { sid } = req.body || {};
+      if (!sid) return res.status(400).json({ error: 'SID required' });
+      
+      const { error } = await supabase
+        .from('basement_banned_users')
+        .delete()
+        .eq('sid', sid);
+      if (error) throw error;
+      return res.json({ success: true });
+    }
+    
+    if (action === 'unmute') {
+      const { sid } = req.body || {};
+      if (!sid) return res.status(400).json({ error: 'SID required' });
+      
+      const { error } = await supabase
+        .from('basement_muted_users')
+        .delete()
+        .eq('sid', sid);
+      if (error) throw error;
+      return res.json({ success: true });
+    }
+    
+    res.status(400).json({ error: 'Invalid action' });
+  } catch (error) {
+    console.error('Error in moderation DELETE:', error);
+    res.status(500).json({ error: 'Failed to delete moderation data' });
+  }
+});
+
 // Initialize server
 async function startServer() {
     app.listen(PORT, () => {
