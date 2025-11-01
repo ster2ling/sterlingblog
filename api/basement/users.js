@@ -4,11 +4,11 @@ const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_R
 module.exports = async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+      const thirtySecondsAgo = Date.now() - 30 * 1000;
       const { data, error } = await sb
         .from('basement_users')
         .select('*')
-        .gte('last_seen', fiveMinutesAgo)
+        .gte('last_seen', thirtySecondsAgo)
         .order('last_seen', { ascending: false });
       if (error) throw error;
       return res.status(200).json(data || []);

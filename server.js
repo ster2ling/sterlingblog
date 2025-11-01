@@ -452,11 +452,11 @@ async function upsertBasementUser(user) {
 }
 
 async function getBasementUsers() {
-  const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+  const thirtySecondsAgo = Date.now() - 30 * 1000;
   const { data, error } = await supabase
     .from('basement_users')
     .select('*')
-    .gte('last_seen', fiveMinutesAgo)
+    .gte('last_seen', thirtySecondsAgo)
     .order('last_seen', { ascending: false });
   if (error) throw error;
   return data || [];
