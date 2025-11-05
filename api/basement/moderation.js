@@ -1,11 +1,35 @@
 const { createClient } = require('@supabase/supabase-js');
 const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
+// Helper to get session token and verify admin
+async function verifyAdmin(req) {
+  const cookies = req.headers.cookie || '';
+  const tokenMatch = cookies.match(/sessionToken=([^;]+)/);
+  if (!tokenMatch) return null;
+  
+  const token = tokenMatch[1];
+  const { data: session } = await sb
+    .from('sessions')
+    .select('*, users(*)')
+    .eq('token', token)
+    .gt('expires_at', Date.now())
+    .maybeSingle();
+  
+  if (!session || !session.users || !session.users.is_admin) return null;
+  return session.users;
+}
+
 module.exports = async function handler(req, res) {
   try {
     const { action } = req.query; // ban, unban, mute, unmute, kick, clear, settings
     
     if (req.method === 'POST') {
+      // Verify admin for all POST actions
+      const admin = await verifyAdmin(req);
+      if (!admin) {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+      
       if (action === 'ban') {
         const { sid, name, reason } = req.body;
         if (!sid) return res.status(400).json({ error: 'SID required' });
@@ -139,6 +163,12 @@ module.exports = async function handler(req, res) {
     }
     
     if (req.method === 'DELETE') {
+      // Verify admin for all DELETE actions
+      const admin = await verifyAdmin(req);
+      if (!admin) {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+      
       if (action === 'unban') {
         const { sid } = req.body || {};
         if (!sid) return res.status(400).json({ error: 'SID required' });

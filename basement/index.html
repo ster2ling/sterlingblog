@@ -617,6 +617,10 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                             </div>
                         </div>
                         <div class="window-content">
+                            <div id="user-auth-status" style="padding: 5px; background: #f0f0f0; border-bottom: 1px solid #ccc; text-align: center; font-size: 11px;">
+                                <span id="auth-user-display">Guest</span>
+                                <button onclick="openAuthModal()" id="auth-btn" style="margin-left: 10px; padding: 2px 8px; font-size: 10px;">Login</button>
+                            </div>
                             <div class="users-list" id="users-list">
                                 <div class="user-item online">
                                     <div class="user-status online"></div>
@@ -791,7 +795,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             messageDiv.className = 'message';
             
             // Check if user is admin
-            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            const isAdmin = currentUser && currentUser.is_admin;
             // Check if this is the user's own message
             const nicknameInput = document.getElementById('nickname-input');
             const currentNickname = nicknameInput ? (nicknameInput.value || 'Anonymous') : 'Anonymous';
@@ -1084,7 +1088,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                   .then(users => {
                       const list = document.getElementById('users-list');
                       if (!list) return;
-                      const isAdmin = localStorage.getItem('isAdmin') === 'true';
+                      const isAdmin = currentUser && currentUser.is_admin;
                       
                       list.innerHTML = users.map(u => {
                         const modButtons = isAdmin ? `
@@ -1278,19 +1282,158 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             localStorage.setItem('basementPlaylist', JSON.stringify(playlist));
         }
         
+        // Authentication Functions
+        let currentUser = null;
+        
+        function openAuthModal() {
+            document.getElementById('auth-modal').style.display = 'flex';
+        }
+        
+        function closeAuthModal() {
+            document.getElementById('auth-modal').style.display = 'none';
+        }
+        
+        function switchToRegister() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'block';
+            document.getElementById('auth-modal-title').textContent = '📝 Register';
+        }
+        
+        function switchToLogin() {
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('auth-modal-title').textContent = '🔐 Login';
+        }
+        
+        async function performLogin() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            
+            if (!username || !password) {
+                alert('Please enter username and password');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    
+                    // Update UI
+                    closeAuthModal();
+                    alert(`Welcome back, ${data.user.display_name}!`);
+                    
+                    // Set nickname to username
+                    document.getElementById('nickname-input').value = data.user.display_name || data.user.username;
+                    
+                    // Reload to show admin features if admin
+                    if (data.user.is_admin) {
+                        location.reload();
+                    }
+                } else {
+                    const error = await response.json();
+                    alert(error.error || 'Login failed');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Error logging in');
+            }
+        }
+        
+        async function performRegister() {
+            const username = document.getElementById('reg-username').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const email = document.getElementById('reg-email').value.trim();
+            const displayName = document.getElementById('reg-displayname').value.trim();
+            
+            if (!username || !password) {
+                alert('Username and password are required');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, email, displayName })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    
+                    closeAuthModal();
+                    alert(`Account created! Welcome, ${data.user.display_name}!`);
+                    
+                    // Set nickname to username
+                    document.getElementById('nickname-input').value = data.user.display_name || data.user.username;
+                    location.reload();
+                } else {
+                    const error = await response.json();
+                    alert(error.error || 'Registration failed');
+                }
+            } catch (error) {
+                console.error('Register error:', error);
+                alert('Error creating account');
+            }
+        }
+        
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/auth/verify');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.authenticated) {
+                        currentUser = data.user;
+                        // Update UI to show logged-in user
+                        document.getElementById('auth-user-display').textContent = data.user.display_name || data.user.username;
+                        document.getElementById('auth-btn').textContent = 'Logout';
+                        document.getElementById('auth-btn').onclick = performLogout;
+                        
+                        // Auto-fill nickname with display name
+                        const nicknameInput = document.getElementById('nickname-input');
+                        if (nicknameInput && !nicknameInput.value) {
+                            nicknameInput.value = data.user.display_name || data.user.username;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Auth check error:', error);
+            }
+        }
+        
+        async function performLogout() {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                currentUser = null;
+                alert('Logged out!');
+                location.reload();
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+        
         // Track visits
         window.addEventListener('load', function() {
             const visits = parseInt(localStorage.getItem('basementVisits') || '0') + 1;
             localStorage.setItem('basementVisits', visits.toString());
+            checkAuth(); // Check if user is logged in
         });
         // Admin Panel Popup
         function openAdminPanel() {
             console.log('Opening admin panel...');
-            console.log('Admin status:', localStorage.getItem('isAdmin'));
+            console.log('Current user:', currentUser);
             
             // Check if user is admin
-            if (localStorage.getItem('isAdmin') !== 'true') {
-                alert('Admin access only! Please log in at /admin first.');
+            if (!currentUser || !currentUser.is_admin) {
+                alert('Admin access only! Please log in with an admin account.');
+                openAuthModal(); // Prompt to login
                 return;
             }
             
@@ -1466,6 +1609,57 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             }
         }
     </script>
+    
+    <!-- Login/Register Modal -->
+    <div id="auth-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;">
+        <div class="window" style="width: 400px;">
+            <div class="title-bar">
+                <span id="auth-modal-title">🔐 Login</span>
+                <div class="title-bar-controls">
+                    <button aria-label="Close" onclick="closeAuthModal()">×</button>
+                </div>
+            </div>
+            <div class="window-body" style="padding: 20px;">
+                <div id="login-form">
+                    <div class="field-row" style="margin-bottom: 10px;">
+                        <label for="login-username">Username:</label>
+                        <input type="text" id="login-username" style="width: 100%;" maxlength="20">
+                    </div>
+                    <div class="field-row" style="margin-bottom: 10px;">
+                        <label for="login-password">Password:</label>
+                        <input type="password" id="login-password" style="width: 100%;">
+                    </div>
+                    <div class="field-row" style="margin-bottom: 10px;">
+                        <button onclick="performLogin()">Login</button>
+                        <button onclick="switchToRegister()" style="margin-left: 5px;">Register</button>
+                    </div>
+                </div>
+                
+                <div id="register-form" style="display: none;">
+                    <div class="field-row" style="margin-bottom: 10px;">
+                        <label for="reg-username">Username (3-20 chars):</label>
+                        <input type="text" id="reg-username" style="width: 100%;" maxlength="20">
+                    </div>
+                    <div class="field-row" style="margin-bottom: 10px;">
+                        <label for="reg-password">Password (min 6 chars):</label>
+                        <input type="password" id="reg-password" style="width: 100%;">
+                    </div>
+                    <div class="field-row" style="margin-bottom: 10px;">
+                        <label for="reg-email">Email (optional):</label>
+                        <input type="email" id="reg-email" style="width: 100%;">
+                    </div>
+                    <div class="field-row" style="margin-bottom: 10px;">
+                        <label for="reg-displayname">Display Name (optional):</label>
+                        <input type="text" id="reg-displayname" style="width: 100%;">
+                    </div>
+                    <div class="field-row" style="margin-bottom: 10px;">
+                        <button onclick="performRegister()">Create Account</button>
+                        <button onclick="switchToLogin()" style="margin-left: 5px;">Back to Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <!-- Admin Panel Modal -->
     <div id="admin-panel-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;">

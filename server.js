@@ -808,6 +808,186 @@ app.delete('/api/basement/moderation', async (req, res) => {
   }
 });
 
+// Authentication Routes
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { username, password, email, displayName } = req.body || {};
+    
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
+    
+    if (username.length < 3 || username.length > 20) {
+      return res.status(400).json({ error: 'Username must be 3-20 characters' });
+    }
+    
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    
+    const { data: existing } = await supabase
+      .from('users')
+      .select('username')
+      .eq('username', username)
+      .maybeSingle();
+    
+    if (existing) {
+      return res.status(409).json({ error: 'Username already taken' });
+    }
+    
+    const passwordHash = await bcrypt.hash(password, 10);
+    
+    const { data: user, error } = await supabase
+      .from('users')
+      .insert({
+        username,
+        email: email || null,
+        password_hash: passwordHash,
+        display_name: displayName || username,
+        is_admin: false
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    const sessionToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = Date.now() + (30 * 24 * 60 * 60 * 1000);
+    
+    await supabase
+      .from('sessions')
+      .insert({
+        user_id: user.id,
+        token: sessionToken,
+        expires_at: expiresAt
+      });
+    
+    res.cookie('sessionToken', sessionToken, { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 });
+    
+    return res.status(201).json({
+      user: {
+        id: user.id,
+        username: user.username,
+        display_name: user.display_name,
+        avatar_url: user.avatar_url,
+        is_admin: user.is_admin
+      }
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ error: error.message || 'Registration failed' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body || {};
+    
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
+    
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .single();
+    
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+    
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
+    
+    if (!passwordMatch) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+    
+    const sessionToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = Date.now() + (30 * 24 * 60 * 60 * 1000);
+    
+    await supabase
+      .from('sessions')
+      .insert({
+        user_id: user.id,
+        token: sessionToken,
+        expires_at: expiresAt
+      });
+    
+    res.cookie('sessionToken', sessionToken, { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 });
+    
+    return res.status(200).json({
+      user: {
+        id: user.id,
+        username: user.username,
+        display_name: user.display_name,
+        avatar_url: user.avatar_url,
+        is_admin: user.is_admin
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: error.message || 'Login failed' });
+  }
+});
+
+app.post('/api/auth/logout', async (req, res) => {
+  try {
+    const token = req.cookies.sessionToken;
+    
+    if (token) {
+      await supabase
+        .from('sessions')
+        .delete()
+        .eq('token', token);
+    }
+    
+    res.clearCookie('sessionToken');
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ error: error.message || 'Logout failed' });
+  }
+});
+
+app.get('/api/auth/verify', async (req, res) => {
+  try {
+    const token = req.cookies.sessionToken;
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Not authenticated', authenticated: false });
+    }
+    
+    const { data: session, error } = await supabase
+      .from('sessions')
+      .select('*, users(*)')
+      .eq('token', token)
+      .gt('expires_at', Date.now())
+      .single();
+    
+    if (error || !session) {
+      return res.status(401).json({ error: 'Invalid or expired session', authenticated: false });
+    }
+    
+    return res.status(200).json({
+      authenticated: true,
+      user: {
+        id: session.users.id,
+        username: session.users.username,
+        display_name: session.users.display_name,
+        avatar_url: session.users.avatar_url,
+        is_admin: session.users.is_admin
+      }
+    });
+  } catch (error) {
+    console.error('Verify error:', error);
+    res.status(500).json({ error: error.message || 'Verification failed', authenticated: false });
+  }
+});
+
 // Initialize server
 async function startServer() {
     app.listen(PORT, () => {
