@@ -818,8 +818,9 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message';
             
-            // Check if user is admin (handle both string and object types)
-            const isAdmin = currentUser && typeof currentUser === 'object' && currentUser.is_admin;
+            // Check if user is admin - check localStorage first (regular admin login), then basement auth
+            const isAdmin = localStorage.getItem('isAdmin') === 'true' || 
+                           (currentUser && typeof currentUser === 'object' && currentUser.is_admin);
             // Check if this is the user's own message
             const nicknameInput = document.getElementById('nickname-input');
             const currentNickname = nicknameInput ? (nicknameInput.value || 'Anonymous') : 'Anonymous';
@@ -1499,10 +1500,16 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             console.log('Opening admin panel...');
             console.log('Current user:', currentUser);
             
-            // Check if user is admin (handle both string and object types)
-            const isAdmin = currentUser && typeof currentUser === 'object' && currentUser.is_admin;
+            // Check if user is admin - check localStorage first (regular admin login), then basement auth
+            const isAdmin = localStorage.getItem('isAdmin') === 'true' || 
+                           (currentUser && typeof currentUser === 'object' && currentUser.is_admin);
             if (!isAdmin) {
                 alert('Admin access only! Please log in with an admin account.');
+                // Redirect to admin login page if not logged in via regular admin
+                if (localStorage.getItem('isAdmin') !== 'true') {
+                    window.location.href = '/admin';
+                    return;
+                }
                 openAuthModal(); // Prompt to login
                 return;
             }
