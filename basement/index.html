@@ -732,33 +732,42 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
         });
         
         function initializeChatroom() {
-            const nicknameInput = document.getElementById('nickname-input');
-            const chatInput = document.getElementById('chat-input');
-            const sendBtn = document.getElementById('chat-send-btn');
-            const chatMessages = document.getElementById('chat-messages');
-            
-            // Load saved nickname
-            const savedNickname = localStorage.getItem('basementNickname');
-            if (savedNickname) {
-                nicknameInput.value = savedNickname;
-                currentUser = savedNickname;
-            }
-            
-            // Send message on button click
-            sendBtn.addEventListener('click', sendMessage);
-            
-            // Send message on Enter key
-            chatInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    sendMessage();
+            try {
+                const nicknameInput = document.getElementById('nickname-input');
+                const chatInput = document.getElementById('chat-input');
+                const sendBtn = document.getElementById('chat-send-btn');
+                const chatMessages = document.getElementById('chat-messages');
+                
+                if (!nicknameInput || !chatInput || !sendBtn || !chatMessages) {
+                    console.error('Chatroom elements not found');
+                    return;
                 }
-            });
-            
-            // Update nickname
-            nicknameInput.addEventListener('change', function() {
-                currentUser = this.value || 'Anonymous';
-                localStorage.setItem('basementNickname', currentUser);
-            });
+                
+                // Load saved nickname
+                const savedNickname = localStorage.getItem('basementNickname');
+                if (savedNickname) {
+                    nicknameInput.value = savedNickname;
+                    currentUser = savedNickname;
+                }
+                
+                // Send message on button click
+                sendBtn.addEventListener('click', sendMessage);
+                
+                // Send message on Enter key
+                chatInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+                
+                // Update nickname
+                nicknameInput.addEventListener('change', function() {
+                    currentUser = this.value || 'Anonymous';
+                    localStorage.setItem('basementNickname', currentUser);
+                });
+            } catch (error) {
+                console.error('Error initializing chatroom:', error);
+            }
         }
         
         async function sendMessage() {
@@ -874,10 +883,22 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
         async function loadChatHistory() {
             try {
                 const response = await fetch('/api/basement/chat');
-                if (!response.ok) return;
+                if (!response.ok) {
+                    console.error('Chat API error:', response.status, response.statusText);
+                    return;
+                }
                 
                 const messages = await response.json();
+                if (!Array.isArray(messages)) {
+                    console.error('Chat API returned non-array:', messages);
+                    return;
+                }
+                
                 const chatContainer = document.getElementById('chat-messages');
+                if (!chatContainer) {
+                    console.error('Chat container not found');
+                    return;
+                }
                 
                 // Only add new messages (check by timestamp)
                 messages.forEach(msg => {
@@ -908,47 +929,80 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
         let isPlaying = false;
         let audio = document.getElementById('audio-player');
         
-        function initializeMusicPlayer() {
-            const playPauseBtn = document.getElementById('play-pause-btn');
-            const prevBtn = document.getElementById('prev-btn');
-            const nextBtn = document.getElementById('next-btn');
-            const visualizerCanvas = document.getElementById('audio-visualizer');
-            const volumeSlider = document.getElementById('range23');
-            const uploadBtn = document.getElementById('upload-btn');
-            const musicUpload = document.getElementById('music-upload');
-            
-            // Load saved playlist
-            const savedPlaylist = localStorage.getItem('basementPlaylist');
-            if (savedPlaylist) {
-                playlist = JSON.parse(savedPlaylist);
-                updatePlaylistDisplay();
-            }
-            
-            // Event listeners
-            playPauseBtn.addEventListener('click', togglePlayPause);
-            prevBtn.addEventListener('click', previousTrack);
-            nextBtn.addEventListener('click', nextTrack);
-            volumeSlider.addEventListener('input', updateVolume);
-            uploadBtn.addEventListener('click', () => musicUpload.click());
-            musicUpload.addEventListener('change', handleMusicUpload);
-            
-            // Progress bar
-            // Visualizer handled via RAF, no click seeking
-            
-            // Audio events
-            audio.addEventListener('ended', nextTrack);
-            audio.addEventListener('loadedmetadata', () => {
-                // resize canvas to container width
-                visualizerCanvas.width = visualizerCanvas.clientWidth;
-                visualizerCanvas.height = visualizerCanvas.clientHeight;
-            });
-            
-            // Set initial volume
-            // Convert 1..11 to 0..1
-            audio.volume = (volumeSlider.value - 1) / 10;
+        async function initializeMusicPlayer() {
+            try {
+                const playPauseBtn = document.getElementById('play-pause-btn');
+                const prevBtn = document.getElementById('prev-btn');
+                const nextBtn = document.getElementById('next-btn');
+                const visualizerCanvas = document.getElementById('audio-visualizer');
+                const volumeSlider = document.getElementById('range23');
+                const uploadBtn = document.getElementById('upload-btn');
+                const musicUpload = document.getElementById('music-upload');
+                
+                if (!playPauseBtn || !prevBtn || !nextBtn || !visualizerCanvas || !volumeSlider || !uploadBtn || !musicUpload || !audio) {
+                    console.error('Music player elements not found');
+                    return;
+                }
+                
+                // Load saved playlist from localStorage first (fallback)
+                const savedPlaylist = localStorage.getItem('basementPlaylist');
+                if (savedPlaylist) {
+                    try {
+                        playlist = JSON.parse(savedPlaylist);
+                        updatePlaylistDisplay();
+                    } catch (e) {
+                        console.error('Error parsing saved playlist:', e);
+                    }
+                }
+                
+                // Try to load playlist from API
+                try {
+                    const response = await fetch('/api/basement/playlist');
+                    if (response.ok) {
+                        const apiPlaylist = await response.json();
+                        if (Array.isArray(apiPlaylist) && apiPlaylist.length > 0) {
+                            playlist = apiPlaylist.map(track => ({
+                                name: track.name,
+                                src: track.src,
+                                type: track.type || 'audio/mpeg'
+                            }));
+                            updatePlaylistDisplay();
+                            savePlaylist(); // Save to localStorage as backup
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error loading playlist from API:', e);
+                    // Continue with localStorage playlist if API fails
+                }
+                
+                // Event listeners
+                playPauseBtn.addEventListener('click', togglePlayPause);
+                prevBtn.addEventListener('click', previousTrack);
+                nextBtn.addEventListener('click', nextTrack);
+                volumeSlider.addEventListener('input', updateVolume);
+                uploadBtn.addEventListener('click', () => musicUpload.click());
+                musicUpload.addEventListener('change', handleMusicUpload);
+                
+                // Progress bar
+                // Visualizer handled via RAF, no click seeking
+                
+                // Audio events
+                audio.addEventListener('ended', nextTrack);
+                audio.addEventListener('loadedmetadata', () => {
+                    // resize canvas to container width
+                    visualizerCanvas.width = visualizerCanvas.clientWidth;
+                    visualizerCanvas.height = visualizerCanvas.clientHeight;
+                });
+                
+                // Set initial volume
+                // Convert 1..11 to 0..1
+                audio.volume = (volumeSlider.value - 1) / 10;
 
-            // Init visualizer
-            setupVisualizer(visualizerCanvas);
+                // Init visualizer
+                setupVisualizer(visualizerCanvas);
+            } catch (error) {
+                console.error('Error initializing music player:', error);
+            }
         }
         
         function togglePlayPause() {
