@@ -733,37 +733,37 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
         
         function initializeChatroom() {
             try {
-                const nicknameInput = document.getElementById('nickname-input');
-                const chatInput = document.getElementById('chat-input');
-                const sendBtn = document.getElementById('chat-send-btn');
-                const chatMessages = document.getElementById('chat-messages');
-                
+            const nicknameInput = document.getElementById('nickname-input');
+            const chatInput = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('chat-send-btn');
+            const chatMessages = document.getElementById('chat-messages');
+            
                 if (!nicknameInput || !chatInput || !sendBtn || !chatMessages) {
                     console.error('Chatroom elements not found');
                     return;
                 }
                 
                 // Load saved nickname (only for guests, authenticated users use their display name)
-                const savedNickname = localStorage.getItem('basementNickname');
+            const savedNickname = localStorage.getItem('basementNickname');
                 if (savedNickname && (typeof currentUser === 'string' || !currentUser)) {
-                    nicknameInput.value = savedNickname;
-                    currentUser = savedNickname;
+                nicknameInput.value = savedNickname;
+                currentUser = savedNickname;
                 } else if (currentUser && typeof currentUser === 'object' && currentUser.display_name) {
                     nicknameInput.value = currentUser.display_name;
+            }
+            
+            // Send message on button click
+            sendBtn.addEventListener('click', sendMessage);
+            
+            // Send message on Enter key
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
                 }
-                
-                // Send message on button click
-                sendBtn.addEventListener('click', sendMessage);
-                
-                // Send message on Enter key
-                chatInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        sendMessage();
-                    }
-                });
-                
+            });
+            
                 // Update nickname (only for guests, authenticated users keep their display name)
-                nicknameInput.addEventListener('change', function() {
+            nicknameInput.addEventListener('change', function() {
                     // Only update if user is not authenticated (string or not set)
                     if (typeof currentUser === 'string' || !currentUser || !currentUser.is_admin) {
                         const newNickname = this.value || 'Anonymous';
@@ -778,14 +778,23 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
         
         async function sendMessage() {
             const chatInput = document.getElementById('chat-input');
+            const nicknameInput = document.getElementById('nickname-input');
             const message = chatInput.value.trim();
             
             if (message) {
                 try {
+                    // Get current nickname (use display_name for authenticated users, nickname for guests)
+                    let nickname = 'Anonymous';
+                    if (currentUser && typeof currentUser === 'object' && currentUser.display_name) {
+                        nickname = currentUser.display_name;
+                    } else if (nicknameInput && nicknameInput.value) {
+                        nickname = nicknameInput.value.trim();
+                    }
+                    
                     const response = await fetch('/api/basement/chat', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: message })
+                        body: JSON.stringify({ message: message, nickname: nickname })
                     });
                     
                     if (response.ok) {
@@ -937,25 +946,25 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
         
         async function initializeMusicPlayer() {
             try {
-                const playPauseBtn = document.getElementById('play-pause-btn');
-                const prevBtn = document.getElementById('prev-btn');
-                const nextBtn = document.getElementById('next-btn');
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
                 const visualizerCanvas = document.getElementById('audio-visualizer');
                 const volumeSlider = document.getElementById('range23');
-                const uploadBtn = document.getElementById('upload-btn');
-                const musicUpload = document.getElementById('music-upload');
-                
+            const uploadBtn = document.getElementById('upload-btn');
+            const musicUpload = document.getElementById('music-upload');
+            
                 if (!playPauseBtn || !prevBtn || !nextBtn || !visualizerCanvas || !volumeSlider || !uploadBtn || !musicUpload || !audio) {
                     console.error('Music player elements not found');
                     return;
                 }
                 
                 // Load saved playlist from localStorage first (fallback)
-                const savedPlaylist = localStorage.getItem('basementPlaylist');
-                if (savedPlaylist) {
+            const savedPlaylist = localStorage.getItem('basementPlaylist');
+            if (savedPlaylist) {
                     try {
-                        playlist = JSON.parse(savedPlaylist);
-                        updatePlaylistDisplay();
+                playlist = JSON.parse(savedPlaylist);
+                updatePlaylistDisplay();
                     } catch (e) {
                         console.error('Error parsing saved playlist:', e);
                     }
@@ -979,28 +988,28 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                 } catch (e) {
                     console.error('Error loading playlist from API:', e);
                     // Continue with localStorage playlist if API fails
-                }
-                
-                // Event listeners
-                playPauseBtn.addEventListener('click', togglePlayPause);
-                prevBtn.addEventListener('click', previousTrack);
-                nextBtn.addEventListener('click', nextTrack);
-                volumeSlider.addEventListener('input', updateVolume);
-                uploadBtn.addEventListener('click', () => musicUpload.click());
-                musicUpload.addEventListener('change', handleMusicUpload);
-                
-                // Progress bar
+            }
+            
+            // Event listeners
+            playPauseBtn.addEventListener('click', togglePlayPause);
+            prevBtn.addEventListener('click', previousTrack);
+            nextBtn.addEventListener('click', nextTrack);
+            volumeSlider.addEventListener('input', updateVolume);
+            uploadBtn.addEventListener('click', () => musicUpload.click());
+            musicUpload.addEventListener('change', handleMusicUpload);
+            
+            // Progress bar
                 // Visualizer handled via RAF, no click seeking
-                
-                // Audio events
-                audio.addEventListener('ended', nextTrack);
-                audio.addEventListener('loadedmetadata', () => {
+            
+            // Audio events
+            audio.addEventListener('ended', nextTrack);
+            audio.addEventListener('loadedmetadata', () => {
                     // resize canvas to container width
                     visualizerCanvas.width = visualizerCanvas.clientWidth;
                     visualizerCanvas.height = visualizerCanvas.clientHeight;
-                });
-                
-                // Set initial volume
+            });
+            
+            // Set initial volume
                 // Convert 1..11 to 0..1
                 audio.volume = (volumeSlider.value - 1) / 10;
 

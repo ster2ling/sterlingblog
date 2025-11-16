@@ -8,6 +8,11 @@ function getSidFromCookie(req) {
   return sidMatch ? sidMatch[1] : null;
 }
 
+// Generate a SID if one doesn't exist
+function generateSid() {
+  return 'sid_' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+}
+
 module.exports = async function handler(req, res) {
   try {
     if (req.method === 'GET') {
@@ -20,10 +25,16 @@ module.exports = async function handler(req, res) {
     }
     
     if (req.method === 'POST') {
-      const { message } = req.body || {};
+      const { message, nickname } = req.body || {};
       if (!message) return res.status(400).json({ error: 'Message is required' });
       
-      const sid = getSidFromCookie(req);
+      // Get or generate SID
+      let sid = getSidFromCookie(req);
+      if (!sid) {
+        sid = generateSid();
+        // Set SID cookie
+        res.setHeader('Set-Cookie', `sid=${sid}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${365 * 24 * 60 * 60}`);
+      }
       
       // Check if user is banned
       const { data: banned } = await sb
@@ -79,7 +90,7 @@ module.exports = async function handler(req, res) {
         }
       }
       
-      // Resolve author - first check if user is authenticated, then fall back to basement_users
+      // Resolve author - first check if user is authenticated, then fall back to nickname/basement_users
       let authorName = 'Anonymous';
       
       // Check for authenticated session first
@@ -106,16 +117,38 @@ module.exports = async function handler(req, res) {
         }
       }
       
-      // Fall back to basement_users (for guests)
+      // Fall back to nickname from request or basement_users (for guests)
       if (authorName === 'Anonymous') {
-        try {
-          const { data: u } = await sb
-            .from('basement_users')
-            .select('name, sid')
-            .eq('sid', sid)
-            .single();
-          if (u && u.name) authorName = u.name;
-        } catch (_) {}
+        // Try nickname from request first
+        if (nickname && nickname.trim() && nickname !== 'Anonymous') {
+          authorName = nickname.trim().slice(0, 20);
+        } else {
+          // Try to get from basement_users
+          try {
+            const { data: u } = await sb
+              .from('basement_users')
+              .select('name, sid')
+              .eq('sid', sid)
+              .maybeSingle();
+            if (u && u.name) authorName = u.name;
+          } catch (_) {}
+        }
+        
+        // Update basement_users with current nickname (ensure user is registered)
+        if (nickname && nickname.trim() && nickname !== 'Anonymous') {
+          try {
+            await sb
+              .from('basement_users')
+              .upsert({
+                sid: sid,
+                name: nickname.trim().slice(0, 20),
+                status: 'online',
+                last_seen: Date.now()
+              }, { onConflict: 'sid' });
+          } catch (e) {
+            console.error('Error updating basement_users:', e);
+          }
+        }
       }
       
       const payload = { 
