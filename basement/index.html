@@ -743,11 +743,13 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                     return;
                 }
                 
-                // Load saved nickname
+                // Load saved nickname (only for guests, authenticated users use their display name)
                 const savedNickname = localStorage.getItem('basementNickname');
-                if (savedNickname) {
+                if (savedNickname && (typeof currentUser === 'string' || !currentUser)) {
                     nicknameInput.value = savedNickname;
                     currentUser = savedNickname;
+                } else if (currentUser && typeof currentUser === 'object' && currentUser.display_name) {
+                    nicknameInput.value = currentUser.display_name;
                 }
                 
                 // Send message on button click
@@ -760,10 +762,14 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                     }
                 });
                 
-                // Update nickname
+                // Update nickname (only for guests, authenticated users keep their display name)
                 nicknameInput.addEventListener('change', function() {
-                    currentUser = this.value || 'Anonymous';
-                    localStorage.setItem('basementNickname', currentUser);
+                    // Only update if user is not authenticated (string or not set)
+                    if (typeof currentUser === 'string' || !currentUser || !currentUser.is_admin) {
+                        const newNickname = this.value || 'Anonymous';
+                        currentUser = newNickname;
+                        localStorage.setItem('basementNickname', newNickname);
+                    }
                 });
             } catch (error) {
                 console.error('Error initializing chatroom:', error);
@@ -803,8 +809,8 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message';
             
-            // Check if user is admin
-            const isAdmin = currentUser && currentUser.is_admin;
+            // Check if user is admin (handle both string and object types)
+            const isAdmin = currentUser && typeof currentUser === 'object' && currentUser.is_admin;
             // Check if this is the user's own message
             const nicknameInput = document.getElementById('nickname-input');
             const currentNickname = nicknameInput ? (nicknameInput.value || 'Anonymous') : 'Anonymous';
@@ -1142,7 +1148,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                   .then(users => {
                       const list = document.getElementById('users-list');
                       if (!list) return;
-                      const isAdmin = currentUser && currentUser.is_admin;
+                      const isAdmin = currentUser && typeof currentUser === 'object' && currentUser.is_admin;
                       
                       list.innerHTML = users.map(u => {
                         const modButtons = isAdmin ? `
@@ -1337,7 +1343,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
         }
         
         // Authentication Functions
-        let currentUser = null;
+        // currentUser is already declared above - can be string ('Anonymous') or user object
         
         function openAuthModal() {
             document.getElementById('auth-modal').style.display = 'flex';
@@ -1484,8 +1490,9 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             console.log('Opening admin panel...');
             console.log('Current user:', currentUser);
             
-            // Check if user is admin
-            if (!currentUser || !currentUser.is_admin) {
+            // Check if user is admin (handle both string and object types)
+            const isAdmin = currentUser && typeof currentUser === 'object' && currentUser.is_admin;
+            if (!isAdmin) {
                 alert('Admin access only! Please log in with an admin account.');
                 openAuthModal(); // Prompt to login
                 return;
