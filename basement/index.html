@@ -1305,6 +1305,18 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                       const isAdmin = localStorage.getItem('isAdmin') === 'true' || 
                                      (currentUser && typeof currentUser === 'object' && currentUser.is_admin);
                       
+                      // If no users returned, keep existing content but ensure there's at least a placeholder
+                      if (!users || users.length === 0) {
+                          if (!list.innerHTML.trim()) {
+                              list.innerHTML = `
+                                <div class="user-item online">
+                                  <div class="user-status online"></div>
+                                  <span class="user-name">No one online yet</span>
+                                </div>`;
+                          }
+                          return;
+                      }
+                      
                       list.innerHTML = users.map(u => {
                         const modButtons = isAdmin ? `
                           <div style="margin-top: 3px;">
@@ -1667,12 +1679,10 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                         document.getElementById('auth-btn').textContent = 'Logout';
                         document.getElementById('auth-btn').onclick = performLogout;
                         
-                        // Auto-fill nickname with display name and lock it
+                        // Force nickname to account name and lock it (even if it was previously set to 'Anonymous')
                         const nicknameInput = document.getElementById('nickname-input');
                         if (nicknameInput) {
-                            if (!nicknameInput.value) {
-                                nicknameInput.value = data.user.display_name || data.user.username;
-                            }
+                            nicknameInput.value = data.user.display_name || data.user.username;
                             setNicknameLock(true);
                         }
                         
