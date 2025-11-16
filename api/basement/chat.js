@@ -79,16 +79,44 @@ module.exports = async function handler(req, res) {
         }
       }
       
-      // Resolve author from sid to prevent impersonation
+      // Resolve author - first check if user is authenticated, then fall back to basement_users
       let authorName = 'Anonymous';
-      try {
-        const { data: u } = await sb
-          .from('basement_users')
-          .select('name, sid')
-          .eq('sid', sid)
-          .single();
-        if (u && u.name) authorName = u.name;
-      } catch (_) {}
+      
+      // Check for authenticated session first
+      const cookies = req.headers.cookie || '';
+      const tokenMatch = cookies.match(/sessionToken=([^;]+)/);
+      if (tokenMatch) {
+        const { data: session } = await sb
+          .from('sessions')
+          .select('user_id')
+          .eq('token', tokenMatch[1])
+          .gt('expires_at', Date.now())
+          .maybeSingle();
+        
+        if (session && session.user_id) {
+          const { data: user } = await sb
+            .from('users')
+            .select('display_name, username')
+            .eq('id', session.user_id)
+            .maybeSingle();
+          
+          if (user) {
+            authorName = user.display_name || user.username;
+          }
+        }
+      }
+      
+      // Fall back to basement_users (for guests)
+      if (authorName === 'Anonymous') {
+        try {
+          const { data: u } = await sb
+            .from('basement_users')
+            .select('name, sid')
+            .eq('sid', sid)
+            .single();
+          if (u && u.name) authorName = u.name;
+        } catch (_) {}
+      }
       
       const payload = { 
         author: authorName, 

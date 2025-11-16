@@ -25,24 +25,35 @@ module.exports = async function handler(req, res) {
     // Find session
     const { data: session, error: sessionError } = await sb
       .from('sessions')
-      .select('*, users(*)')
+      .select('user_id')
       .eq('token', token)
       .gt('expires_at', Date.now())
-      .single();
+      .maybeSingle();
     
-    if (sessionError || !session) {
+    if (sessionError || !session || !session.user_id) {
       return res.status(401).json({ error: 'Invalid or expired session', authenticated: false });
+    }
+    
+    // Get user info
+    const { data: user, error: userError } = await sb
+      .from('users')
+      .select('id, username, display_name, avatar_url, is_admin')
+      .eq('id', session.user_id)
+      .maybeSingle();
+    
+    if (userError || !user) {
+      return res.status(401).json({ error: 'User not found', authenticated: false });
     }
     
     // Return user info
     return res.status(200).json({
       authenticated: true,
       user: {
-        id: session.users.id,
-        username: session.users.username,
-        display_name: session.users.display_name,
-        avatar_url: session.users.avatar_url,
-        is_admin: session.users.is_admin
+        id: user.id,
+        username: user.username,
+        display_name: user.display_name,
+        avatar_url: user.avatar_url,
+        is_admin: user.is_admin
       }
     });
   } catch (e) {
@@ -50,4 +61,5 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: e.message || 'Verification failed', authenticated: false });
   }
 };
+
 

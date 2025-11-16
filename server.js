@@ -539,16 +539,43 @@ app.post('/api/basement/chat', async (req, res) => {
       return res.status(403).json({ error: 'Chat is in lockdown mode - admin only' });
     }
     
-    // Resolve author from sid to prevent impersonation
+    // Resolve author - first check if user is authenticated, then fall back to basement_users
     let authorName = 'Anonymous';
-    try {
-      const { data: u } = await supabase
-        .from('basement_users')
-        .select('name, sid')
-        .eq('sid', sid)
-        .single();
-      if (u && u.name) authorName = u.name;
-    } catch (_) {}
+    
+    // Check for authenticated session first
+    const sessionToken = req.cookies.sessionToken;
+    if (sessionToken) {
+      const { data: session } = await supabase
+        .from('sessions')
+        .select('user_id')
+        .eq('token', sessionToken)
+        .gt('expires_at', Date.now())
+        .maybeSingle();
+      
+      if (session && session.user_id) {
+        const { data: user } = await supabase
+          .from('users')
+          .select('display_name, username')
+          .eq('id', session.user_id)
+          .maybeSingle();
+        
+        if (user) {
+          authorName = user.display_name || user.username;
+        }
+      }
+    }
+    
+    // Fall back to basement_users (for guests)
+    if (authorName === 'Anonymous') {
+      try {
+        const { data: u } = await supabase
+          .from('basement_users')
+          .select('name, sid')
+          .eq('sid', sid)
+          .single();
+        if (u && u.name) authorName = u.name;
+      } catch (_) {}
+    }
     
     const msg = {
       author: authorName,
@@ -715,8 +742,20 @@ app.post('/api/basement/moderation', async (req, res) => {
     }
     
     if (action === 'clear') {
+      // Delete all chat messages
+      // Using .neq() to delete all rows (Supabase requires a filter)
       const { error } = await supabase.from('basement_chat').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      if (error) throw error;
+      if (error) {
+        // Fallback: try to delete with a different approach if the above fails
+        console.error('Clear chat error:', error);
+        // Get all message IDs and delete them
+        const { data: messages } = await supabase.from('basement_chat').select('id');
+        if (messages && messages.length > 0) {
+          const ids = messages.map(m => m.id);
+          const { error: deleteError } = await supabase.from('basement_chat').delete().in('id', ids);
+          if (deleteError) throw deleteError;
+        }
+      }
       return res.json({ success: true });
     }
     
@@ -963,23 +1002,33 @@ app.get('/api/auth/verify', async (req, res) => {
     
     const { data: session, error } = await supabase
       .from('sessions')
-      .select('*, users(*)')
+      .select('user_id')
       .eq('token', token)
       .gt('expires_at', Date.now())
-      .single();
+      .maybeSingle();
     
-    if (error || !session) {
+    if (error || !session || !session.user_id) {
       return res.status(401).json({ error: 'Invalid or expired session', authenticated: false });
+    }
+    
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id, username, display_name, avatar_url, is_admin')
+      .eq('id', session.user_id)
+      .maybeSingle();
+    
+    if (userError || !user) {
+      return res.status(401).json({ error: 'User not found', authenticated: false });
     }
     
     return res.status(200).json({
       authenticated: true,
       user: {
-        id: session.users.id,
-        username: session.users.username,
-        display_name: session.users.display_name,
-        avatar_url: session.users.avatar_url,
-        is_admin: session.users.is_admin
+        id: user.id,
+        username: user.username,
+        display_name: user.display_name,
+        avatar_url: user.avatar_url,
+        is_admin: user.is_admin
       }
     });
   } catch (error) {

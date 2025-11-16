@@ -10,13 +10,21 @@ async function verifyAdmin(req) {
   const token = tokenMatch[1];
   const { data: session } = await sb
     .from('sessions')
-    .select('*, users(*)')
+    .select('user_id')
     .eq('token', token)
     .gt('expires_at', Date.now())
     .maybeSingle();
   
-  if (!session || !session.users || !session.users.is_admin) return null;
-  return session.users;
+  if (!session || !session.user_id) return null;
+  
+  const { data: user } = await sb
+    .from('users')
+    .select('*')
+    .eq('id', session.user_id)
+    .maybeSingle();
+  
+  if (!user || !user.is_admin) return null;
+  return user;
 }
 
 module.exports = async function handler(req, res) {
@@ -71,8 +79,19 @@ module.exports = async function handler(req, res) {
       
       if (action === 'clear') {
         // Delete all chat messages
+        // Using .neq() to delete all rows (Supabase requires a filter)
         const { error } = await sb.from('basement_chat').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        if (error) throw error;
+        if (error) {
+          // Fallback: try to delete with a different approach if the above fails
+          console.error('Clear chat error:', error);
+          // Get all message IDs and delete them
+          const { data: messages } = await sb.from('basement_chat').select('id');
+          if (messages && messages.length > 0) {
+            const ids = messages.map(m => m.id);
+            const { error: deleteError } = await sb.from('basement_chat').delete().in('id', ids);
+            if (deleteError) throw deleteError;
+          }
+        }
         return res.status(200).json({ success: true });
       }
       

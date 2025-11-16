@@ -92,3 +92,4 @@ INSERT INTO users (username, email, password_hash, display_name, is_admin)
 VALUES ('admin', 'admin@sterling.ooo', '$2b$10$placeholder', 'Administrator', true)
 ON CONFLICT (username) DO NOTHING;
 
+

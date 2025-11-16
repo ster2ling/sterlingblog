@@ -79,3 +79,4 @@ INSERT INTO basement_chat_settings (id, slow_mode_seconds, lockdown_mode, motd)
 VALUES (1, 0, false, 'Welcome to the basement!')
 ON CONFLICT (id) DO NOTHING;
 
+
