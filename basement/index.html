@@ -430,6 +430,77 @@
             max-height: 40px !important;
         }
         
+        /* Toast Notification System */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10001;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        
+        .toast {
+            background: #c0c0c0;
+            border: 2px outset #c0c0c0;
+            padding: 12px 16px;
+            min-width: 250px;
+            max-width: 400px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            pointer-events: auto;
+            animation: slideIn 0.3s ease-out;
+            font-size: 12px;
+            color: #000;
+        }
+        
+        .toast.success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .toast.error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        
+        .toast.warning {
+            background: #fff3cd;
+            border-color: #ffeeba;
+        }
+        
+        .toast.info {
+            background: #d1ecf1;
+            border-color: #bee5eb;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        .toast.hiding {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+        
         #footer .window-body {
             display: flex;
             align-items: center;
@@ -698,6 +769,38 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
     <audio id="audio-player" preload="metadata"></audio>
 
     <script>
+        // Toast Notification System
+        function showNotification(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            
+            container.appendChild(toast);
+            
+            // Auto-remove after duration
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, duration);
+            
+            // Allow clicking to dismiss
+            toast.addEventListener('click', () => {
+                toast.classList.add('hiding');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            });
+        }
+        
         // Chatroom functionality
         let chatMessages = [];
         let currentUser = 'Anonymous';
@@ -804,11 +907,11 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                     } else {
                         // Show error message (banned, muted, slow mode, etc.)
                         const errorData = await response.json();
-                        alert(errorData.error || 'Failed to send message');
+                        showNotification(errorData.error || 'Failed to send message', 'error');
                     }
                 } catch (error) {
                     console.error('Error sending message:', error);
-                    alert('Error sending message');
+                    showNotification('Error sending message', 'error');
                 }
             }
         }
@@ -866,11 +969,11 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                     lastMessageTimestamp = 0;
                     loadChatHistory();
                 } else {
-                    alert('Failed to pin message');
+                    showNotification('Failed to pin message', 'error');
                 }
             } catch (error) {
                 console.error('Error pinning message:', error);
-                alert('Error pinning message');
+                    showNotification('Error pinning message', 'error');
             }
         }
         
@@ -887,11 +990,11 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                         lastMessageTimestamp = 0;
                         loadChatHistory();
                     } else {
-                        alert('Failed to delete message');
+                        showNotification('Failed to delete message', 'error');
                     }
                 } catch (error) {
                     console.error('Error deleting message:', error);
-                    alert('Error deleting message');
+                    showNotification('Error deleting message', 'error');
                 }
             }
         }
@@ -1199,14 +1302,14 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                 });
                 
                 if (response.ok) {
-                    alert(`${name} has been banned!`);
+                    showNotification(`${name} has been banned!`, 'success');
                     refreshList();
                 } else {
-                    alert('Failed to ban user');
+                    showNotification('Failed to ban user', 'error');
                 }
             } catch (error) {
                 console.error('Error banning user:', error);
-                alert('Error banning user');
+                showNotification('Error banning user', 'error');
             }
         }
         
@@ -1220,14 +1323,14 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                     });
                     
                     if (response.ok) {
-                        alert(`${name} has been kicked!`);
+                        showNotification(`${name} has been kicked!`, 'success');
                         refreshList();
                     } else {
-                        alert('Failed to kick user');
+                        showNotification('Failed to kick user', 'error');
                     }
                 } catch (error) {
                     console.error('Error kicking user:', error);
-                    alert('Error kicking user');
+                    showNotification('Error kicking user', 'error');
                 }
             }
         }
@@ -1247,13 +1350,13 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                 });
                 
                 if (response.ok) {
-                    alert(`${name} has been muted for ${duration} minutes!`);
+                    showNotification(`${name} has been muted for ${duration} minutes!`, 'success');
                 } else {
-                    alert('Failed to mute user');
+                    showNotification('Failed to mute user', 'error');
                 }
             } catch (error) {
                 console.error('Error muting user:', error);
-                alert('Error muting user');
+                showNotification('Error muting user', 'error');
             }
         }
         
@@ -1269,7 +1372,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                 if (user && user.sid) {
                     muteUser(user.sid, name);
                 } else {
-                    alert('User not found or not online');
+                    showNotification('User not found or not online', 'warning');
                 }
             } catch (error) {
                 console.error('Error finding user:', error);
@@ -1288,7 +1391,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                 if (user && user.sid) {
                     banUser(user.sid, name);
                 } else {
-                    alert('User not found or not online');
+                    showNotification('User not found or not online', 'warning');
                 }
             } catch (error) {
                 console.error('Error finding user:', error);
@@ -1380,7 +1483,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             const password = document.getElementById('login-password').value;
             
             if (!username || !password) {
-                alert('Please enter username and password');
+                showNotification('Please enter username and password', 'warning');
                 return;
             }
             
@@ -1397,7 +1500,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                     
                     // Update UI
                     closeAuthModal();
-                    alert(`Welcome back, ${data.user.display_name}!`);
+                    showNotification(`Welcome back, ${data.user.display_name}!`, 'success');
                     
                     // Set nickname to username
                     document.getElementById('nickname-input').value = data.user.display_name || data.user.username;
@@ -1408,11 +1511,11 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                     }
                 } else {
                     const error = await response.json();
-                    alert(error.error || 'Login failed');
+                    showNotification(error.error || 'Login failed', 'error');
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                alert('Error logging in');
+                showNotification('Error logging in', 'error');
             }
         }
         
@@ -1423,7 +1526,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             const displayName = document.getElementById('reg-displayname').value.trim();
             
             if (!username || !password) {
-                alert('Username and password are required');
+                showNotification('Username and password are required', 'warning');
                 return;
             }
             
@@ -1439,18 +1542,18 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                     currentUser = data.user;
                     
                     closeAuthModal();
-                    alert(`Account created! Welcome, ${data.user.display_name}!`);
+                    showNotification(`Account created! Welcome, ${data.user.display_name}!`, 'success');
                     
                     // Set nickname to username
                     document.getElementById('nickname-input').value = data.user.display_name || data.user.username;
                     location.reload();
                 } else {
                     const error = await response.json();
-                    alert(error.error || 'Registration failed');
+                    showNotification(error.error || 'Registration failed', 'error');
                 }
             } catch (error) {
                 console.error('Register error:', error);
-                alert('Error creating account');
+                showNotification('Error creating account', 'error');
             }
         }
         
@@ -1482,8 +1585,8 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             try {
                 await fetch('/api/auth?action=logout', { method: 'POST' });
                 currentUser = null;
-                alert('Logged out!');
-                location.reload();
+                showNotification('Logged out!', 'info');
+                setTimeout(() => location.reload(), 500);
             } catch (error) {
                 console.error('Logout error:', error);
             }
@@ -1514,7 +1617,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             const isAdmin = localStorage.getItem('isAdmin') === 'true' || 
                            (currentUser && typeof currentUser === 'object' && currentUser.is_admin);
             if (!isAdmin) {
-                alert('Admin access only! Please log in with an admin account.');
+                showNotification('Admin access only! Please log in with an admin account.', 'warning');
                 // Redirect to admin login page if not logged in via regular admin
                 if (localStorage.getItem('isAdmin') !== 'true') {
                     window.location.href = '/admin';
@@ -1572,15 +1675,15 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                 });
                 
                 if (response.ok) {
-                    alert('Settings updated!');
+                    showNotification('Settings updated!', 'success');
                     loadMOTD(); // Refresh MOTD display
                 } else {
                     const error = await response.json();
-                    alert('Failed to update: ' + (error.error || 'Unknown error'));
+                    showNotification('Failed to update: ' + (error.error || 'Unknown error'), 'error');
                 }
             } catch (error) {
                 console.error('Error updating settings:', error);
-                alert('Error updating settings');
+                showNotification('Error updating settings', 'error');
             }
         }
         
@@ -1649,7 +1752,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                 if (response.ok) {
                     loadAdminBannedUsers();
                 } else {
-                    alert('Failed to unban user');
+                    showNotification('Failed to unban user', 'error');
                 }
             } catch (error) {
                 console.error('Error unbanning user:', error);
@@ -1667,7 +1770,7 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                 if (response.ok) {
                     loadAdminMutedUsers();
                 } else {
-                    alert('Failed to unmute user');
+                    showNotification('Failed to unmute user', 'error');
                 }
             } catch (error) {
                 console.error('Error unmuting user:', error);
@@ -1682,16 +1785,16 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                     });
                     
                     if (response.ok) {
-                        alert('All messages cleared!');
+                        showNotification('All messages cleared!', 'success');
                         document.getElementById('chat-messages').innerHTML = '';
                         lastMessageTimestamp = 0;
                         loadChatHistory();
                     } else {
-                        alert('Failed to clear chat');
+                        showNotification('Failed to clear chat', 'error');
                     }
                 } catch (error) {
                     console.error('Error clearing chat:', error);
-                    alert('Error clearing chat');
+                    showNotification('Error clearing chat', 'error');
                 }
             }
         }
@@ -1793,5 +1896,8 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             </div>
         </div>
     </div>
+    
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
 </body>
 </html>
