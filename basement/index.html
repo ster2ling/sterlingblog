@@ -1245,23 +1245,37 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
         });
 
         // Active users ping + list refresh
+        let pingPresence, refreshUserList;
+        
         function startPresence() {
             const nicknameInput = document.getElementById('nickname-input');
-            function ping() {
-                const name = (nicknameInput.value || 'Anonymous').slice(0, 20);
+            pingPresence = function() {
+                // Use authenticated user's display name if logged in, otherwise use nickname input
+                let name = 'Anonymous';
+                if (currentUser && typeof currentUser === 'object' && currentUser.display_name) {
+                    name = currentUser.display_name;
+                } else if (currentUser && typeof currentUser === 'object' && currentUser.username) {
+                    name = currentUser.username;
+                } else if (nicknameInput && nicknameInput.value) {
+                    name = nicknameInput.value.trim();
+                }
+                name = name.slice(0, 20);
+                
                 fetch('/api/basement/users', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, status: 'online' })
                 }).catch(() => {});
-            }
-            function refreshList() {
+            };
+            
+            refreshUserList = function() {
                 fetch('/api/basement/users')
                   .then(r => r.ok ? r.json() : [])
                   .then(users => {
                       const list = document.getElementById('users-list');
                       if (!list) return;
-                      const isAdmin = currentUser && typeof currentUser === 'object' && currentUser.is_admin;
+                      const isAdmin = localStorage.getItem('isAdmin') === 'true' || 
+                                     (currentUser && typeof currentUser === 'object' && currentUser.is_admin);
                       
                       list.innerHTML = users.map(u => {
                         const modButtons = isAdmin ? `
@@ -1280,13 +1294,14 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                         </div>`;
                       }).join('');
                   }).catch(() => {});
-            }
-            ping();
-            refreshList();
-            setInterval(ping, 20000);
-            setInterval(refreshList, 10000);
+            };
+            
+            pingPresence();
+            refreshUserList();
+            setInterval(pingPresence, 20000);
+            setInterval(refreshUserList, 10000);
         }
-
+        
         document.addEventListener('DOMContentLoaded', startPresence);
         
         // Moderation Functions
@@ -1398,25 +1413,69 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             }
         }
         
-        function handleMusicUpload(e) {
+        async function handleMusicUpload(e) {
             const files = Array.from(e.target.files);
             
-            files.forEach(file => {
+            for (const file of files) {
                 if (file.type.startsWith('audio/')) {
                     const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const track = {
-                            name: file.name.replace(/\.[^/.]+$/, ""),
-                            src: event.target.result,
-                            type: file.type
-                        };
-                        playlist.push(track);
-                        updatePlaylistDisplay();
-                        savePlaylist();
+                    reader.onload = async function(event) {
+                        const trackName = file.name.replace(/\.[^/.]+$/, "");
+                        const trackSrc = event.target.result; // base64 data URL
+                        
+                        // Upload to server
+                        try {
+                            const response = await fetch('/api/basement/playlist', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    name: trackName,
+                                    src: trackSrc,
+                                    type: file.type || 'audio/mpeg'
+                                })
+                            });
+                            
+                            if (response.ok) {
+                                const trackData = await response.json();
+                                const track = {
+                                    name: trackData.name,
+                                    src: trackData.src,
+                                    type: trackData.type || file.type
+                                };
+                                playlist.push(track);
+                                updatePlaylistDisplay();
+                                savePlaylist(); // Save to localStorage as backup
+                                showNotification(`"${trackName}" uploaded!`, 'success');
+                            } else {
+                                const error = await response.json();
+                                showNotification(`Failed to upload "${trackName}": ${error.error || 'Unknown error'}`, 'error');
+                                // Fallback to localStorage only
+                                const track = {
+                                    name: trackName,
+                                    src: trackSrc,
+                                    type: file.type
+                                };
+                                playlist.push(track);
+                                updatePlaylistDisplay();
+                                savePlaylist();
+                            }
+                        } catch (error) {
+                            console.error('Error uploading track:', error);
+                            showNotification(`Failed to upload "${trackName}"`, 'error');
+                            // Fallback to localStorage only
+                            const track = {
+                                name: trackName,
+                                src: trackSrc,
+                                type: file.type
+                            };
+                            playlist.push(track);
+                            updatePlaylistDisplay();
+                            savePlaylist();
+                        }
                     };
                     reader.readAsDataURL(file);
                 }
-            });
+            }
         }
         
         function updatePlaylistDisplay() {
@@ -1505,6 +1564,10 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                     // Set nickname to username
                     document.getElementById('nickname-input').value = data.user.display_name || data.user.username;
                     
+                    // Update presence immediately with new name
+                    if (pingPresence) pingPresence();
+                    if (refreshUserList) refreshUserList();
+                    
                     // Reload to show admin features if admin
                     if (data.user.is_admin) {
                         location.reload();
@@ -1546,6 +1609,11 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                     
                     // Set nickname to username
                     document.getElementById('nickname-input').value = data.user.display_name || data.user.username;
+                    
+                    // Update presence immediately with new name
+                    if (pingPresence) pingPresence();
+                    if (refreshUserList) refreshUserList();
+                    
                     location.reload();
                 } else {
                     const error = await response.json();
@@ -1573,6 +1641,14 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                         const nicknameInput = document.getElementById('nickname-input');
                         if (nicknameInput && !nicknameInput.value) {
                             nicknameInput.value = data.user.display_name || data.user.username;
+                        }
+                        
+                        // Update presence with authenticated user's name
+                        if (pingPresence) {
+                            setTimeout(() => {
+                                pingPresence();
+                                if (refreshUserList) refreshUserList();
+                            }, 500);
                         }
                     }
                 }

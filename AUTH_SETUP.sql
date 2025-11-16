@@ -85,8 +85,6 @@ CREATE POLICY "Allow public insert to user_preferences" ON user_preferences
 CREATE POLICY "Allow public update to user_preferences" ON user_preferences
     FOR UPDATE USING (true);
 
--- Create an admin user
--- Password is '$me4$me4' hashed with bcrypt
 INSERT INTO users (username, email, password_hash, display_name, is_admin)
 VALUES ('admin', 'admin@sterling.ooo', '$2b$10$RANk6P2cuUVTn5PXyosh/OCeYf84JcwMlY8V0ALjdU.abjvl84BKe', 'Administrator', true)
 ON CONFLICT (username) DO NOTHING;
