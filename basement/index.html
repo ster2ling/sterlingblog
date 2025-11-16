@@ -801,6 +801,26 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             });
         }
         
+        // Nickname lock helper (locks input for logged-in users)
+        function setNicknameLock(isLocked) {
+            const nicknameInput = document.getElementById('nickname-input');
+            if (!nicknameInput) return;
+            
+            if (isLocked) {
+                nicknameInput.readOnly = true;
+                nicknameInput.style.backgroundColor = '#e0e0e0';
+                nicknameInput.style.color = '#555555';
+                nicknameInput.style.cursor = 'not-allowed';
+                nicknameInput.title = 'Nickname is locked to your account name';
+            } else {
+                nicknameInput.readOnly = false;
+                nicknameInput.style.backgroundColor = '';
+                nicknameInput.style.color = '';
+                nicknameInput.style.cursor = '';
+                nicknameInput.title = '';
+            }
+        }
+        
         // Chatroom functionality
         let chatMessages = [];
         let currentUser = 'Anonymous';
@@ -851,9 +871,14 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                 if (savedNickname && (typeof currentUser === 'string' || !currentUser)) {
                 nicknameInput.value = savedNickname;
                 currentUser = savedNickname;
-                } else if (currentUser && typeof currentUser === 'object' && currentUser.display_name) {
-                    nicknameInput.value = currentUser.display_name;
-            }
+                setNicknameLock(false);
+                } else if (currentUser && typeof currentUser === 'object' && (currentUser.display_name || currentUser.username)) {
+                    nicknameInput.value = currentUser.display_name || currentUser.username;
+                    setNicknameLock(true);
+            } else {
+                    // No saved nickname and not logged in yet
+                    setNicknameLock(false);
+                }
             
             // Send message on button click
             sendBtn.addEventListener('click', sendMessage);
@@ -867,11 +892,14 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
             
                 // Update nickname (only for guests, authenticated users keep their display name)
             nicknameInput.addEventListener('change', function() {
-                    // Only update if user is not authenticated (string or not set)
-                    if (typeof currentUser === 'string' || !currentUser || !currentUser.is_admin) {
+                    // Only update if user is a guest (not authenticated)
+                    if (typeof currentUser === 'string' || !currentUser) {
                         const newNickname = this.value || 'Anonymous';
                         currentUser = newNickname;
                         localStorage.setItem('basementNickname', newNickname);
+                    } else {
+                        // Reset to locked name if they try to change while logged in
+                        this.value = currentUser.display_name || currentUser.username || this.value;
                     }
                 });
             } catch (error) {
@@ -1561,8 +1589,9 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                     closeAuthModal();
                     showNotification(`Welcome back, ${data.user.display_name}!`, 'success');
                     
-                    // Set nickname to username
+                    // Set nickname to username and lock it
                     document.getElementById('nickname-input').value = data.user.display_name || data.user.username;
+                    setNicknameLock(true);
                     
                     // Update presence immediately with new name
                     if (pingPresence) pingPresence();
@@ -1607,8 +1636,9 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                     closeAuthModal();
                     showNotification(`Account created! Welcome, ${data.user.display_name}!`, 'success');
                     
-                    // Set nickname to username
+                    // Set nickname to username and lock it
                     document.getElementById('nickname-input').value = data.user.display_name || data.user.username;
+                    setNicknameLock(true);
                     
                     // Update presence immediately with new name
                     if (pingPresence) pingPresence();
@@ -1637,10 +1667,13 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
                         document.getElementById('auth-btn').textContent = 'Logout';
                         document.getElementById('auth-btn').onclick = performLogout;
                         
-                        // Auto-fill nickname with display name
+                        // Auto-fill nickname with display name and lock it
                         const nicknameInput = document.getElementById('nickname-input');
-                        if (nicknameInput && !nicknameInput.value) {
-                            nicknameInput.value = data.user.display_name || data.user.username;
+                        if (nicknameInput) {
+                            if (!nicknameInput.value) {
+                                nicknameInput.value = data.user.display_name || data.user.username;
+                            }
+                            setNicknameLock(true);
                         }
                         
                         // Update presence with authenticated user's name
