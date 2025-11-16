@@ -1493,6 +1493,16 @@ bruh                grid-template-rows: 50px 300px 150px 400px 25px;
         window.addEventListener('load', function() {
             const visits = parseInt(localStorage.getItem('basementVisits') || '0') + 1;
             localStorage.setItem('basementVisits', visits.toString());
+            
+            // If user is admin via localStorage but doesn't have admin cookie, set it
+            if (localStorage.getItem('isAdmin') === 'true') {
+                const cookies = document.cookie;
+                if (!cookies.includes('adminToken=')) {
+                    const adminToken = 'admin_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+                    document.cookie = `adminToken=${adminToken}; Path=/; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}`;
+                }
+            }
+            
             checkAuth(); // Check if user is logged in
         });
         // Admin Panel Popup

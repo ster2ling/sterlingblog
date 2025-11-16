@@ -281,6 +281,8 @@
         // Logout function
         function logout() {
             localStorage.removeItem('isAdmin');
+            // Clear admin cookie
+            document.cookie = 'adminToken=; Path=/; SameSite=Lax; Max-Age=0';
             window.location.href = '/';
         }
         

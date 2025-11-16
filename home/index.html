@@ -736,6 +736,11 @@
             const password = adminPassword.value.trim();
             if (password === ADMIN_PASSWORD) {
               localStorage.setItem('isAdmin', 'true');
+              
+              // Set admin cookie for server-side verification
+              const adminToken = 'admin_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+              document.cookie = `adminToken=${adminToken}; Path=/; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}`;
+              
               adminPassword.value = '';
               // Redirect to admin page
               window.location.href = '../admin/blog-writer.html';
@@ -746,6 +751,8 @@
 
           function logoutAdmin() {
             localStorage.removeItem('isAdmin');
+            // Clear admin cookie
+            document.cookie = 'adminToken=; Path=/; SameSite=Lax; Max-Age=0';
             adminPassword.value = '';
             adminLoginSection.style.display = 'none';
           }

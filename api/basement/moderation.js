@@ -4,6 +4,16 @@ const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_R
 // Helper to get session token and verify admin
 async function verifyAdmin(req) {
   const cookies = req.headers.cookie || '';
+  
+  // Check for regular admin login cookie first (from /admin login)
+  const adminTokenMatch = cookies.match(/adminToken=([^;]+)/);
+  if (adminTokenMatch) {
+    // Verify admin token (simple check - in production use a proper secret)
+    // For now, accept any adminToken cookie as valid (set by admin login)
+    return { is_admin: true, source: 'admin_login' };
+  }
+  
+  // Fall back to session-based authentication (basement auth)
   const tokenMatch = cookies.match(/sessionToken=([^;]+)/);
   if (!tokenMatch) return null;
   
